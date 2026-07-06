@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useMemo } from "react";
-import { AtSign, Briefcase } from "lucide-react";
+import { AtSign, Briefcase, Layers } from "lucide-react";
 // plane imports
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import {
@@ -31,6 +31,7 @@ import type {
   IIssueLabel,
   IModule,
   IProject,
+  TIssueType,
   TWorkItemFilterProperty,
 } from "@plane/types";
 import { Avatar } from "@plane/ui";
@@ -51,10 +52,12 @@ import {
   getSubscriberFilterConfig,
   getTargetDateFilterConfig,
   getUpdatedAtFilterConfig,
+  getWorkItemTypeFilterConfig,
   isLoaderReady,
 } from "@plane/utils";
 // store hooks
 import { useCycle } from "@/hooks/store/use-cycle";
+import { useIssueTypes } from "@/hooks/store/use-issue-types";
 import { useLabel } from "@/hooks/store/use-label";
 import { useMember } from "@/hooks/store/use-member";
 import { useModule } from "@/hooks/store/use-module";
@@ -72,6 +75,7 @@ export type TWorkItemFiltersEntityProps = {
   projectId?: string;
   projectIds?: string[];
   stateIds?: string[];
+  issueTypeIds?: string[];
 };
 
 export type TUseWorkItemFiltersConfigProps = {
@@ -89,8 +93,18 @@ export type TWorkItemFiltersConfig = {
 };
 
 export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps): TWorkItemFiltersConfig => {
-  const { allowedFilters, cycleIds, labelIds, memberIds, moduleIds, projectId, projectIds, stateIds, workspaceSlug } =
-    props;
+  const {
+    allowedFilters,
+    cycleIds,
+    labelIds,
+    memberIds,
+    moduleIds,
+    projectId,
+    projectIds,
+    stateIds,
+    issueTypeIds,
+    workspaceSlug,
+  } = props;
   // store hooks
   const { loader: projectLoader, getProjectById } = useProject();
   const { getCycleById } = useCycle();
@@ -98,6 +112,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const { getModuleById } = useModule();
   const { getStateById } = useProjectState();
   const { getUserDetails } = useMember();
+  const { getIssueTypeById } = useIssueTypes();
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
   const filtersToShow = useMemo(() => new Set(allowedFilters), [allowedFilters]);
@@ -113,6 +128,13 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     () =>
       stateIds ? (stateIds.map((stateId) => getStateById(stateId)).filter((state) => state) as IState[]) : undefined,
     [stateIds, getStateById]
+  );
+  const workItemTypes: TIssueType[] | undefined = useMemo(
+    () =>
+      issueTypeIds
+        ? (issueTypeIds.map((typeId) => getIssueTypeById(typeId)).filter((type) => type) as TIssueType[])
+        : undefined,
+    [issueTypeIds, getIssueTypeById]
   );
   const workItemLabels: IIssueLabel[] | undefined = useMemo(
     () =>
@@ -170,6 +192,21 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         ...operatorConfigs,
       }),
     [isFilterEnabled, workItemStates, operatorConfigs]
+  );
+
+  // work item type filter config
+  const workItemTypeFilterConfig = useMemo(
+    () =>
+      getWorkItemTypeFilterConfig<TWorkItemFilterProperty>("issue_type")({
+        isEnabled:
+          isFilterEnabled("issue_type") && project?.is_issue_type_enabled === true && workItemTypes !== undefined,
+        filterIcon: Layers,
+        getOptionIcon: (workItemType) =>
+          workItemType.logo_props?.in_use ? <Logo logo={workItemType.logo_props} size={12} /> : undefined,
+        workItemTypes: workItemTypes ?? [],
+        ...operatorConfigs,
+      }),
+    [isFilterEnabled, project?.is_issue_type_enabled, workItemTypes, operatorConfigs]
   );
 
   // label filter config
@@ -367,6 +404,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     configs: [
       stateFilterConfig,
       stateGroupFilterConfig,
+      workItemTypeFilterConfig,
       assigneeFilterConfig,
       priorityFilterConfig,
       projectFilterConfig,
@@ -385,6 +423,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       project_id: projectFilterConfig,
       state_group: stateGroupFilterConfig,
       state_id: stateFilterConfig,
+      issue_type: workItemTypeFilterConfig,
       label_id: labelFilterConfig,
       cycle_id: cycleFilterConfig,
       module_id: moduleFilterConfig,
