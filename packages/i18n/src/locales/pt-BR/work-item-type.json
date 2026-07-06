@@ -17,6 +17,42 @@
         "description": "Crie e personalize propriedades.",
         "tooltip": "Cada tipo de item de trabalho vem com um conjunto padrão de propriedades como Título, Descrição, Responsável, Estado, Prioridade, Data de início, Data de vencimento, Módulo, Ciclo etc. Você também pode personalizar e adicionar suas próprias propriedades para adaptar às necessidades da sua equipe.",
         "add_button": "Adicionar nova propriedade",
+        "ce": {
+          "empty": "Ainda não há propriedades personalizadas neste tipo.",
+          "name_placeholder": "Nome da propriedade",
+          "add_property": "Adicionar propriedade",
+          "required": "Obrigatório",
+          "multi": "Múltiplo",
+          "select_placeholder": "Selecionar…",
+          "add_option": "Adicionar opção",
+          "add": "Adicionar",
+          "option_add_error": "Não foi possível adicionar a opção.",
+          "create_error": "Não foi possível criar a propriedade.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Texto",
+            "number": "Número",
+            "boolean": "Booleano",
+            "date": "Data",
+            "url": "URL",
+            "email": "E-mail",
+            "dropdown": "Menu suspenso",
+            "relation": "Relação",
+            "file": "Arquivo"
+          },
+          "relation": {
+            "member": "Membro",
+            "work_item": "Item de trabalho",
+            "select_member": "Selecionar membro",
+            "select_members": "Selecionar membros",
+            "add_work_item": "Adicionar item de trabalho",
+            "change": "Alterar"
+          },
+          "value": {
+            "yes": "Sim",
+            "no": "Não"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Importar do espaço de trabalho"

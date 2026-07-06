@@ -17,6 +17,42 @@
         "description": "Tạo và tùy chỉnh thuộc tính.",
         "tooltip": "Mỗi loại mục công việc đi kèm với một bộ thuộc tính mặc định như Tiêu đề, Mô tả, Người được giao, Trạng thái, Ưu tiên, Ngày bắt đầu, Ngày đến hạn, Module, Chu kỳ, v.v. Bạn cũng có thể tùy chỉnh và thêm thuộc tính riêng của mình để phù hợp với nhu cầu của nhóm bạn.",
         "add_button": "Thêm thuộc tính mới",
+        "ce": {
+          "empty": "Loại này chưa có thuộc tính tùy chỉnh nào.",
+          "name_placeholder": "Tên thuộc tính",
+          "add_property": "Thêm thuộc tính",
+          "required": "Bắt buộc",
+          "multi": "Nhiều",
+          "select_placeholder": "Chọn…",
+          "add_option": "Thêm tùy chọn",
+          "add": "Thêm",
+          "option_add_error": "Không thể thêm tùy chọn.",
+          "create_error": "Không thể tạo thuộc tính.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Văn bản",
+            "number": "Số",
+            "boolean": "Boolean",
+            "date": "Ngày",
+            "url": "URL",
+            "email": "Email",
+            "dropdown": "Dropdown",
+            "relation": "Quan hệ",
+            "file": "Tệp"
+          },
+          "relation": {
+            "member": "Thành viên",
+            "work_item": "Mục công việc",
+            "select_member": "Chọn thành viên",
+            "select_members": "Chọn các thành viên",
+            "add_work_item": "Thêm mục công việc",
+            "change": "Thay đổi"
+          },
+          "value": {
+            "yes": "Có",
+            "no": "Không"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Nhập từ không gian làm việc"

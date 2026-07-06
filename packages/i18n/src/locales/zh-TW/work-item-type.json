@@ -17,6 +17,42 @@
         "description": "建立和自訂屬性。",
         "tooltip": "每種工作項目類型都有一組默認屬性，如標題、描述、負責人、狀態、優先級、開始日期、截止日期、模塊、週期等。您還可以自定義並添加自己的屬性，以適應您團隊的需求。",
         "add_button": "添加新屬性",
+        "ce": {
+          "empty": "此類型尚無自訂屬性。",
+          "name_placeholder": "屬性名稱",
+          "add_property": "新增屬性",
+          "required": "必填",
+          "multi": "多選",
+          "select_placeholder": "選擇…",
+          "add_option": "新增選項",
+          "add": "新增",
+          "option_add_error": "無法新增該選項。",
+          "create_error": "無法建立該屬性。",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "文字",
+            "number": "數字",
+            "boolean": "布林值",
+            "date": "日期",
+            "url": "URL",
+            "email": "電子郵件",
+            "dropdown": "下拉式選單",
+            "relation": "關聯",
+            "file": "檔案"
+          },
+          "relation": {
+            "member": "成員",
+            "work_item": "工作項目",
+            "select_member": "選擇成員",
+            "select_members": "選擇成員",
+            "add_work_item": "新增工作項目",
+            "change": "變更"
+          },
+          "value": {
+            "yes": "是",
+            "no": "否"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "從工作區匯入"

@@ -17,6 +17,42 @@
         "description": "プロパティを作成・カスタマイズします。",
         "tooltip": "各作業項目タイプには、タイトル、説明、担当者、状態、優先度、開始日、期限日、モジュール、サイクルなどのデフォルトのプロパティセットが付属しています。チームのニーズに合わせて独自のプロパティをカスタマイズして追加することもできます。",
         "add_button": "新しいプロパティを追加",
+        "ce": {
+          "empty": "このタイプにはまだカスタムプロパティがありません。",
+          "name_placeholder": "プロパティ名",
+          "add_property": "プロパティを追加",
+          "required": "必須",
+          "multi": "複数",
+          "select_placeholder": "選択…",
+          "add_option": "オプションを追加",
+          "add": "追加",
+          "option_add_error": "オプションを追加できませんでした。",
+          "create_error": "プロパティを作成できませんでした。",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "テキスト",
+            "number": "数値",
+            "boolean": "ブール値",
+            "date": "日付",
+            "url": "URL",
+            "email": "メール",
+            "dropdown": "ドロップダウン",
+            "relation": "リレーション",
+            "file": "ファイル"
+          },
+          "relation": {
+            "member": "メンバー",
+            "work_item": "作業項目",
+            "select_member": "メンバーを選択",
+            "select_members": "メンバーを選択",
+            "add_work_item": "作業項目を追加",
+            "change": "変更"
+          },
+          "value": {
+            "yes": "はい",
+            "no": "いいえ"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "ワークスペースからインポート"

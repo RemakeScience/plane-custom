@@ -8,9 +8,12 @@ import React, { useState } from "react";
 import { observer } from "mobx-react";
 import useSWR from "swr";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { EIssuePropertyType } from "@plane/types";
 import type { TIssueProperty, TIssuePropertyValue, TIssuePropertyValues } from "@plane/types";
 import { ToggleSwitch } from "@plane/ui";
+// components
+import { PropertyRelationField } from "@/plane-web/components/issues/property-fields/relation-field";
 // hooks
 import { useIssueProperties } from "@/hooks/store/use-issue-properties";
 // services
@@ -35,13 +38,27 @@ const SidebarPropertyField = observer(function SidebarPropertyField(props: {
   property: TIssueProperty;
   value: TIssuePropertyValue[];
   isEditable: boolean;
+  projectId: string;
+  workspaceSlug: string;
   onCommit: (value: TIssuePropertyValue[]) => void;
 }) {
-  const { property, value, isEditable, onCommit } = props;
+  const { property, value, isEditable, projectId, workspaceSlug, onCommit } = props;
   const { getPropertyOptions } = useIssueProperties();
+  const { t } = useTranslation();
   const single = value?.[0];
 
   switch (property.property_type) {
+    case EIssuePropertyType.RELATION:
+      return (
+        <PropertyRelationField
+          property={property}
+          value={value}
+          disabled={!isEditable}
+          projectId={projectId}
+          workspaceSlug={workspaceSlug}
+          onChange={onCommit}
+        />
+      );
     case EIssuePropertyType.BOOLEAN:
       return (
         <ToggleSwitch
@@ -60,7 +77,7 @@ const SidebarPropertyField = observer(function SidebarPropertyField(props: {
           value={typeof single === "string" ? single : ""}
           onChange={(e) => onCommit(e.target.value === "" ? [] : [e.target.value])}
         >
-          <option value="">Select…</option>
+          <option value="">{t("work_item_types.settings.properties.ce.select_placeholder")}</option>
           {options.map((option) => (
             <option key={option.id} value={option.id}>
               {option.name}
@@ -73,6 +90,7 @@ const SidebarPropertyField = observer(function SidebarPropertyField(props: {
     case EIssuePropertyType.DATETIME:
     case EIssuePropertyType.EMAIL:
     case EIssuePropertyType.URL:
+    case EIssuePropertyType.FILE:
     default:
       return (
         <input
@@ -83,7 +101,8 @@ const SidebarPropertyField = observer(function SidebarPropertyField(props: {
                 ? "date"
                 : property.property_type === EIssuePropertyType.EMAIL
                   ? "email"
-                  : property.property_type === EIssuePropertyType.URL
+                  : property.property_type === EIssuePropertyType.URL ||
+                      property.property_type === EIssuePropertyType.FILE
                     ? "url"
                     : "text"
           }
@@ -155,6 +174,8 @@ export const WorkItemAdditionalSidebarProperties = observer(function WorkItemAdd
               property={property}
               value={values[property.id] ?? []}
               isEditable={isEditable}
+              projectId={projectId}
+              workspaceSlug={workspaceSlug}
               onCommit={(newValue) => handleCommit(property, newValue)}
             />
           </div>

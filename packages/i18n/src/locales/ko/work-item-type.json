@@ -17,6 +17,42 @@
         "description": "프로퍼티를 생성하고 사용자 정의하세요.",
         "tooltip": "각 워크 아이템 타입에는 제목, 설명, 담당자, 상태, 우선순위, 시작 날짜, 마감일, 모듈, 사이클 등과 같은 기본 프로퍼티 세트가 함께 제공됩니다. 팀의 요구에 맞게 자신만의 프로퍼티를 사용자 정의하고 추가할 수도 있습니다.",
         "add_button": "새 프로퍼티 추가",
+        "ce": {
+          "empty": "이 유형에는 아직 사용자 지정 프로퍼티가 없습니다.",
+          "name_placeholder": "프로퍼티 이름",
+          "add_property": "프로퍼티 추가",
+          "required": "필수",
+          "multi": "다중",
+          "select_placeholder": "선택…",
+          "add_option": "옵션 추가",
+          "add": "추가",
+          "option_add_error": "옵션을 추가할 수 없습니다.",
+          "create_error": "프로퍼티를 만들 수 없습니다.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "텍스트",
+            "number": "숫자",
+            "boolean": "부울",
+            "date": "날짜",
+            "url": "URL",
+            "email": "이메일",
+            "dropdown": "드롭다운",
+            "relation": "관계",
+            "file": "파일"
+          },
+          "relation": {
+            "member": "멤버",
+            "work_item": "작업 항목",
+            "select_member": "멤버 선택",
+            "select_members": "멤버 선택",
+            "add_work_item": "작업 항목 추가",
+            "change": "변경"
+          },
+          "value": {
+            "yes": "예",
+            "no": "아니요"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "워크스페이스에서 가져오기"

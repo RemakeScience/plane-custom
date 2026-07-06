@@ -17,6 +17,42 @@
         "description": "Vytvárajte a prispôsobujte vlastnosti.",
         "tooltip": "Každý typ pracovnej položky je dodávaný s predvolenou sadou vlastností ako Názov, Popis, Priradený používateľ, Stav, Priorita, Dátum začiatku, Termín dokončenia, Modul, Cyklus atď. Môžete si tiež prispôsobiť a pridať vlastné vlastnosti, aby vyhovovali potrebám vášho tímu.",
         "add_button": "Pridať novú vlastnosť",
+        "ce": {
+          "empty": "Tento typ zatiaľ nemá žiadne vlastné vlastnosti.",
+          "name_placeholder": "Názov vlastnosti",
+          "add_property": "Pridať vlastnosť",
+          "required": "Povinné",
+          "multi": "Viac",
+          "select_placeholder": "Vyberte…",
+          "add_option": "Pridať možnosť",
+          "add": "Pridať",
+          "option_add_error": "Nepodarilo sa pridať možnosť.",
+          "create_error": "Nepodarilo sa vytvoriť vlastnosť.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Text",
+            "number": "Číslo",
+            "boolean": "Booleovský",
+            "date": "Dátum",
+            "url": "URL",
+            "email": "E-mail",
+            "dropdown": "Rozbaľovací zoznam",
+            "relation": "Vzťah",
+            "file": "Súbor"
+          },
+          "relation": {
+            "member": "Člen",
+            "work_item": "Pracovná položka",
+            "select_member": "Vyberte člena",
+            "select_members": "Vyberte členov",
+            "add_work_item": "Pridať pracovnú položku",
+            "change": "Zmeniť"
+          },
+          "value": {
+            "yes": "Áno",
+            "no": "Nie"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Importovať z pracovného priestoru"

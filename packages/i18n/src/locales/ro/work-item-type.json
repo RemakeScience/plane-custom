@@ -17,6 +17,42 @@
         "description": "Creează și personalizează proprietăți.",
         "tooltip": "Fiecare tip de element de lucru vine cu un set implicit de proprietăți precum Titlu, Descriere, Responsabil, Stare, Prioritate, Data de început, Data scadentă, Modul, Ciclu etc. De asemenea, poți personaliza și adăuga propriile proprietăți pentru a le adapta nevoilor echipei tale.",
         "add_button": "Adaugă proprietate nouă",
+        "ce": {
+          "empty": "Acest tip nu are încă proprietăți personalizate.",
+          "name_placeholder": "Nume proprietate",
+          "add_property": "Adaugă proprietate",
+          "required": "Obligatoriu",
+          "multi": "Multiplu",
+          "select_placeholder": "Selectează…",
+          "add_option": "Adaugă opțiune",
+          "add": "Adaugă",
+          "option_add_error": "Nu s-a putut adăuga opțiunea.",
+          "create_error": "Nu s-a putut crea proprietatea.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Text",
+            "number": "Număr",
+            "boolean": "Boolean",
+            "date": "Dată",
+            "url": "URL",
+            "email": "E-mail",
+            "dropdown": "Dropdown",
+            "relation": "Relație",
+            "file": "Fișier"
+          },
+          "relation": {
+            "member": "Membru",
+            "work_item": "Element de lucru",
+            "select_member": "Selectează membru",
+            "select_members": "Selectează membri",
+            "add_work_item": "Adaugă element de lucru",
+            "change": "Schimbă"
+          },
+          "value": {
+            "yes": "Da",
+            "no": "Nu"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Importă din spațiul de lucru"

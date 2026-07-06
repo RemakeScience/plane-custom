@@ -17,6 +17,42 @@
         "description": "Créez et personnalisez des propriétés.",
         "tooltip": "Chaque type d'élément de travail est livré avec un ensemble de propriétés par défaut comme Titre, Description, Assigné, État, Priorité, Date de début, Date d'échéance, Module, Cycle, etc. Vous pouvez également personnaliser et ajouter vos propres propriétés pour l'adapter aux besoins de votre équipe.",
         "add_button": "Ajouter une nouvelle propriété",
+        "ce": {
+          "empty": "Aucune propriété personnalisée sur ce type pour le moment.",
+          "name_placeholder": "Nom de la propriété",
+          "add_property": "Ajouter une propriété",
+          "required": "Obligatoire",
+          "multi": "Multiple",
+          "select_placeholder": "Sélectionner…",
+          "add_option": "Ajouter une option",
+          "add": "Ajouter",
+          "option_add_error": "Impossible d'ajouter l'option.",
+          "create_error": "Impossible de créer la propriété.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Texte",
+            "number": "Nombre",
+            "boolean": "Booléen",
+            "date": "Date",
+            "url": "URL",
+            "email": "E-mail",
+            "dropdown": "Liste déroulante",
+            "relation": "Relation",
+            "file": "Fichier"
+          },
+          "relation": {
+            "member": "Membre",
+            "work_item": "Élément de travail",
+            "select_member": "Sélectionner un membre",
+            "select_members": "Sélectionner des membres",
+            "add_work_item": "Ajouter un élément de travail",
+            "change": "Modifier"
+          },
+          "value": {
+            "yes": "Oui",
+            "no": "Non"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Importer depuis l’espace de travail"

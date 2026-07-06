@@ -17,6 +17,42 @@
         "description": "Buat dan sesuaikan properti.",
         "tooltip": "Setiap tipe item kerja dilengkapi dengan serangkaian properti default seperti Judul, Deskripsi, Penerima tugas, Status, Prioritas, Tanggal mulai, Tanggal jatuh tempo, Modul, Siklus, dll. Anda juga dapat menyesuaikan dan menambahkan properti Anda sendiri untuk menyesuaikannya dengan kebutuhan tim Anda.",
         "add_button": "Tambah properti baru",
+        "ce": {
+          "empty": "Tipe ini belum memiliki properti kustom.",
+          "name_placeholder": "Nama properti",
+          "add_property": "Tambah properti",
+          "required": "Wajib",
+          "multi": "Ganda",
+          "select_placeholder": "Pilih…",
+          "add_option": "Tambah opsi",
+          "add": "Tambah",
+          "option_add_error": "Tidak dapat menambahkan opsi.",
+          "create_error": "Tidak dapat membuat properti.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Teks",
+            "number": "Angka",
+            "boolean": "Boolean",
+            "date": "Tanggal",
+            "url": "URL",
+            "email": "Email",
+            "dropdown": "Dropdown",
+            "relation": "Relasi",
+            "file": "Berkas"
+          },
+          "relation": {
+            "member": "Anggota",
+            "work_item": "Item kerja",
+            "select_member": "Pilih anggota",
+            "select_members": "Pilih anggota",
+            "add_work_item": "Tambah item kerja",
+            "change": "Ubah"
+          },
+          "value": {
+            "yes": "Ya",
+            "no": "Tidak"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Impor dari ruang kerja"

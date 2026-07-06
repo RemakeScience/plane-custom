@@ -17,6 +17,42 @@
         "description": "Create and customize properties.",
         "tooltip": "Each work item type comes with a default set of properties like Title, Description, Assignee, State, Priority, Start date, Due date, Module, Cycle etc. You can also customize and add your own properties to tailor it to your team's needs.",
         "add_button": "Add new property",
+        "ce": {
+          "empty": "No custom properties on this type yet.",
+          "name_placeholder": "Property name",
+          "add_property": "Add property",
+          "required": "Required",
+          "multi": "Multi",
+          "select_placeholder": "Select…",
+          "add_option": "Add option",
+          "add": "Add",
+          "option_add_error": "Could not add the option.",
+          "create_error": "Could not create the property.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Text",
+            "number": "Number",
+            "boolean": "Boolean",
+            "date": "Date",
+            "url": "URL",
+            "email": "Email",
+            "dropdown": "Dropdown",
+            "relation": "Relation",
+            "file": "File"
+          },
+          "relation": {
+            "member": "Member",
+            "work_item": "Work item",
+            "select_member": "Select member",
+            "select_members": "Select members",
+            "add_work_item": "Add work item",
+            "change": "Change"
+          },
+          "value": {
+            "yes": "Yes",
+            "no": "No"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Import from workspace"

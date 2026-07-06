@@ -4,15 +4,18 @@
  * See the LICENSE file for details.
  */
 
+import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useFormContext } from "react-hook-form";
 import useSWR from "swr";
 // plane imports
+import { useTranslation } from "@plane/i18n";
 import { EIssuePropertyType } from "@plane/types";
-import type { TIssueProperty, TIssuePropertyValue } from "@plane/types";
+import type { TIssueProperty, TIssuePropertyOption, TIssuePropertyValue } from "@plane/types";
 import { ToggleSwitch } from "@plane/ui";
 // components
 import type { TIssueFields } from "@/plane-web/components/issues/issue-modal";
+import { PropertyRelationField } from "@/plane-web/components/issues/property-fields/relation-field";
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
 import { useIssueProperties } from "@/hooks/store/use-issue-properties";
@@ -31,19 +34,53 @@ export type TWorkItemModalAdditionalPropertiesProps = {
 const inputClassName =
   "h-8 w-full rounded border border-subtle-1 bg-layer-2 px-2 text-13 text-primary outline-none focus:border-accent-primary";
 
+/** Compute the declared default value(s) of a property (mirrors the backend). */
+const getPropertyDefaultValue = (property: TIssueProperty, options: TIssuePropertyOption[]): TIssuePropertyValue[] => {
+  let values: TIssuePropertyValue[];
+  if (property.property_type === EIssuePropertyType.OPTION) {
+    values = options.filter((option) => option.is_default && option.is_active).map((option) => option.id);
+  } else {
+    values = (property.default_value ?? []).filter((value) => value !== null && value !== "");
+  }
+  return property.is_multi ? values : values.slice(0, 1);
+};
+
 /** Renders a single custom property input bound to the modal's value state. */
 const PropertyField = observer(function PropertyField(props: {
   property: TIssueProperty;
   value: TIssuePropertyValue[];
   error: string | undefined;
+  projectId: string;
+  workspaceSlug: string;
   onChange: (value: TIssuePropertyValue[]) => void;
 }) {
-  const { property, value, error, onChange } = props;
+  const { property, value, error, projectId, workspaceSlug, onChange } = props;
   const { getPropertyOptions } = useIssueProperties();
+  const { t } = useTranslation();
   const single = value?.[0];
 
   const renderInput = () => {
     switch (property.property_type) {
+      case EIssuePropertyType.RELATION:
+        return (
+          <PropertyRelationField
+            property={property}
+            value={value}
+            projectId={projectId}
+            workspaceSlug={workspaceSlug}
+            onChange={onChange}
+          />
+        );
+      case EIssuePropertyType.FILE:
+        return (
+          <input
+            type="url"
+            placeholder={t("work_item_types.settings.properties.ce.file_placeholder")}
+            className={inputClassName}
+            value={typeof single === "string" ? single : ""}
+            onChange={(e) => onChange(e.target.value === "" ? [] : [e.target.value])}
+          />
+        );
       case EIssuePropertyType.BOOLEAN:
         return <ToggleSwitch value={single === true || single === "true"} onChange={(v) => onChange([v])} size="sm" />;
       case EIssuePropertyType.DECIMAL:
@@ -89,7 +126,7 @@ const PropertyField = observer(function PropertyField(props: {
             value={typeof single === "string" ? single : ""}
             onChange={(e) => onChange(e.target.value === "" ? [] : [e.target.value])}
           >
-            <option value="">Select…</option>
+            <option value="">{t("work_item_types.settings.properties.ce.select_placeholder")}</option>
             {options.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.name}
@@ -134,7 +171,7 @@ export const WorkItemModalAdditionalProperties = observer(function WorkItemModal
   const { projectId, workItemId, workspaceSlug } = props;
   const { watch } = useFormContext<TIssueFields>();
   const typeId = watch("type_id");
-  const { getTypeProperties, fetchProjectProperties } = useIssueProperties();
+  const { getTypeProperties, fetchProjectProperties, getPropertyOptions } = useIssueProperties();
   const { issuePropertyValues, setIssuePropertyValues, issuePropertyValueErrors } = useIssueModal();
 
   // Ensure the project's property definitions are loaded for the modal.
@@ -147,6 +184,27 @@ export const WorkItemModalAdditionalProperties = observer(function WorkItemModal
   );
 
   const properties = projectId && typeId ? (getTypeProperties(projectId, typeId, true) ?? []) : [];
+  const propertyIdsKey = properties.map((property) => property.id).join(",");
+
+  // When creating (no existing work item), pre-fill each property with its
+  // declared default so the user sees it and it flows through the normal save.
+  useEffect(() => {
+    if (workItemId || !typeId || properties.length === 0) return;
+    setIssuePropertyValues((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      properties.forEach((property) => {
+        if (next[property.id]?.length) return;
+        const defaults = getPropertyDefaultValue(property, getPropertyOptions(property.id));
+        if (defaults.length > 0) {
+          next[property.id] = defaults;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyIdsKey, typeId, workItemId]);
 
   // Seed existing values when editing an existing work item.
   useSWR(
@@ -169,6 +227,8 @@ export const WorkItemModalAdditionalProperties = observer(function WorkItemModal
           property={property}
           value={issuePropertyValues[property.id] ?? []}
           error={issuePropertyValueErrors[property.id]}
+          projectId={projectId ?? ""}
+          workspaceSlug={workspaceSlug}
           onChange={(value) => setIssuePropertyValues((prev) => ({ ...prev, [property.id]: value }))}
         />
       ))}

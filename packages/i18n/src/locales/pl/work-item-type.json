@@ -17,6 +17,42 @@
         "description": "Twórz i dostosowuj właściwości.",
         "tooltip": "Każdy typ elementu pracy posiada domyślny zestaw właściwości, takich jak Tytuł, Opis, Przypisany, Stan, Priorytet, Data rozpoczęcia, Termin zakończenia, Moduł, Cykl itp. Możesz również dostosować i dodać własne właściwości, aby dopasować je do potrzeb Twojego zespołu.",
         "add_button": "Dodaj nową właściwość",
+        "ce": {
+          "empty": "Ten typ nie ma jeszcze żadnych właściwości niestandardowych.",
+          "name_placeholder": "Nazwa właściwości",
+          "add_property": "Dodaj właściwość",
+          "required": "Wymagane",
+          "multi": "Wiele",
+          "select_placeholder": "Wybierz…",
+          "add_option": "Dodaj opcję",
+          "add": "Dodaj",
+          "option_add_error": "Nie udało się dodać opcji.",
+          "create_error": "Nie udało się utworzyć właściwości.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Tekst",
+            "number": "Numer",
+            "boolean": "Wartość logiczna",
+            "date": "Data",
+            "url": "URL",
+            "email": "E-mail",
+            "dropdown": "Lista rozwijana",
+            "relation": "Relacja",
+            "file": "Plik"
+          },
+          "relation": {
+            "member": "Członek",
+            "work_item": "Element pracy",
+            "select_member": "Wybierz członka",
+            "select_members": "Wybierz członków",
+            "add_work_item": "Dodaj element pracy",
+            "change": "Zmień"
+          },
+          "value": {
+            "yes": "Tak",
+            "no": "Nie"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Importuj z przestrzeni roboczej"

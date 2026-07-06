@@ -17,6 +17,42 @@
         "description": "Crea e personalizza le proprietà.",
         "tooltip": "Ogni tipo di elemento di lavoro viene fornito con un set predefinito di proprietà come Titolo, Descrizione, Assegnatario, Stato, Priorità, Data di inizio, Data di scadenza, Modulo, Ciclo etc. Puoi anche personalizzare e aggiungere le tue proprietà per adattarle alle esigenze del tuo team.",
         "add_button": "Aggiungi nuova proprietà",
+        "ce": {
+          "empty": "Ancora nessuna proprietà personalizzata su questo tipo.",
+          "name_placeholder": "Nome della proprietà",
+          "add_property": "Aggiungi proprietà",
+          "required": "Obbligatorio",
+          "multi": "Multiplo",
+          "select_placeholder": "Seleziona…",
+          "add_option": "Aggiungi opzione",
+          "add": "Aggiungi",
+          "option_add_error": "Impossibile aggiungere l'opzione.",
+          "create_error": "Impossibile creare la proprietà.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Testo",
+            "number": "Numero",
+            "boolean": "Booleano",
+            "date": "Data",
+            "url": "URL",
+            "email": "E-mail",
+            "dropdown": "Dropdown",
+            "relation": "Relazione",
+            "file": "File"
+          },
+          "relation": {
+            "member": "Membro",
+            "work_item": "Elemento di lavoro",
+            "select_member": "Seleziona membro",
+            "select_members": "Seleziona membri",
+            "add_work_item": "Aggiungi elemento di lavoro",
+            "change": "Modifica"
+          },
+          "value": {
+            "yes": "Sì",
+            "no": "No"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Importa dallo spazio di lavoro"

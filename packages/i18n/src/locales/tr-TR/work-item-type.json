@@ -17,6 +17,42 @@
         "description": "Özellikler oluşturun ve özelleştirin.",
         "tooltip": "Her iş öğesi tipi, Başlık, Açıklama, Atanan Kişi, Durum, Öncelik, Başlangıç tarihi, Bitiş tarihi, Modül, Döngü vb. gibi varsayılan bir özellik seti ile gelir. Ayrıca ekibinizin ihtiyaçlarına göre kendi özelliklerinizi özelleştirebilir ve ekleyebilirsiniz.",
         "add_button": "Yeni özellik ekle",
+        "ce": {
+          "empty": "Bu tipte henüz özel özellik yok.",
+          "name_placeholder": "Özellik adı",
+          "add_property": "Özellik ekle",
+          "required": "Zorunlu",
+          "multi": "Çoklu",
+          "select_placeholder": "Seçin…",
+          "add_option": "Seçenek ekle",
+          "add": "Ekle",
+          "option_add_error": "Seçenek eklenemedi.",
+          "create_error": "Özellik oluşturulamadı.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Metin",
+            "number": "Sayı",
+            "boolean": "Boolean",
+            "date": "Tarih",
+            "url": "URL",
+            "email": "E-posta",
+            "dropdown": "Açılır Liste",
+            "relation": "İlişki",
+            "file": "Dosya"
+          },
+          "relation": {
+            "member": "Üye",
+            "work_item": "İş öğesi",
+            "select_member": "Üye seçin",
+            "select_members": "Üyeleri seçin",
+            "add_work_item": "İş öğesi ekle",
+            "change": "Değiştir"
+          },
+          "value": {
+            "yes": "Evet",
+            "no": "Hayır"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Çalışma alanından içe aktar"

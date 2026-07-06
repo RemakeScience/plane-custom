@@ -17,6 +17,42 @@
         "description": "Erstellen und passen Sie Eigenschaften an.",
         "tooltip": "Jeder Arbeitsaufgabentyp wird mit einem Standardsatz von Eigenschaften wie Titel, Beschreibung, Bearbeiter, Status, Priorität, Startdatum, Fälligkeitsdatum, Modul, Zyklus usw. geliefert. Sie können auch Ihre eigenen Eigenschaften anpassen und hinzufügen, um sie an die Bedürfnisse Ihres Teams anzupassen.",
         "add_button": "Neue Eigenschaft hinzufügen",
+        "ce": {
+          "empty": "Noch keine benutzerdefinierten Eigenschaften für diesen Typ.",
+          "name_placeholder": "Eigenschaftsname",
+          "add_property": "Eigenschaft hinzufügen",
+          "required": "Erforderlich",
+          "multi": "Mehrfach",
+          "select_placeholder": "Auswählen…",
+          "add_option": "Option hinzufügen",
+          "add": "Hinzufügen",
+          "option_add_error": "Die Option konnte nicht hinzugefügt werden.",
+          "create_error": "Die Eigenschaft konnte nicht erstellt werden.",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "Text",
+            "number": "Zahl",
+            "boolean": "Boolean",
+            "date": "Datum",
+            "url": "URL",
+            "email": "E-Mail",
+            "dropdown": "Dropdown",
+            "relation": "Beziehung",
+            "file": "Datei"
+          },
+          "relation": {
+            "member": "Mitglied",
+            "work_item": "Arbeitselement",
+            "select_member": "Mitglied auswählen",
+            "select_members": "Mitglieder auswählen",
+            "add_work_item": "Arbeitselement hinzufügen",
+            "change": "Ändern"
+          },
+          "value": {
+            "yes": "Ja",
+            "no": "Nein"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "Aus Arbeitsbereich importieren"

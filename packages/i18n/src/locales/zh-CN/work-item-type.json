@@ -17,6 +17,42 @@
         "description": "创建和自定义属性。",
         "tooltip": "每种工作项类型都带有一组默认属性，如标题、描述、负责人、状态、优先级、开始日期、截止日期、模块、周期等。您还可以自定义并添加自己的属性以满足团队需求。",
         "add_button": "添加新属性",
+        "ce": {
+          "empty": "此类型暂无自定义属性。",
+          "name_placeholder": "属性名称",
+          "add_property": "添加属性",
+          "required": "必填",
+          "multi": "多选",
+          "select_placeholder": "选择…",
+          "add_option": "添加选项",
+          "add": "添加",
+          "option_add_error": "无法添加该选项。",
+          "create_error": "无法创建该属性。",
+          "file_placeholder": "https://…",
+          "type": {
+            "text": "文本",
+            "number": "数字",
+            "boolean": "布尔值",
+            "date": "日期",
+            "url": "URL",
+            "email": "电子邮件",
+            "dropdown": "下拉列表",
+            "relation": "关联",
+            "file": "文件"
+          },
+          "relation": {
+            "member": "成员",
+            "work_item": "工作项",
+            "select_member": "选择成员",
+            "select_members": "选择成员",
+            "add_work_item": "添加工作项",
+            "change": "更改"
+          },
+          "value": {
+            "yes": "是",
+            "no": "否"
+          }
+        },
         "project": {
           "add_button": {
             "import_from_workspace": "从工作区导入"
