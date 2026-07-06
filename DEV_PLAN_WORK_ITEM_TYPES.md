@@ -245,8 +245,10 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       (text/url/email/number/date/boolean/dropdown simple+multi), lié aux valeurs du contexte modale ; fetch
       des définitions + seed des valeurs existantes. **Vérifié live** : Severity=High persisté à la création.
       (Backend : `type_id` ajouté à la réponse `.values()` de create.)
-- [ ] `issue-details/additional-properties.tsx` — affichage/édition des valeurs dans la sidebar du détail
-      (et peek). Mirror des consommateurs `apps/web/core/components/issues/issue-detail/sidebar.tsx:269`.
+- [x] `issue-details/additional-properties.tsx` (Session 8 P3) — `WorkItemAdditionalSidebarProperties` :
+      rend les propriétés actives du type du work item avec leur valeur (éditable si droits), persistée
+      immédiatement par propriété via le value endpoint. Fetch défs + valeurs via useSWR. **Vérifié live**
+      (Severity=High affiché, édition → Low persistée). Voir §21.
 - [ ] `issue-layouts/additional-properties.tsx` — valeurs custom en colonnes (spreadsheet) / badges.
 - [ ] Composants de saisie réutilisables (RELATION member/issue, FILE) — actuellement TEXT/DECIMAL/BOOLEAN/
       DATETIME/URL/EMAIL/OPTION couverts ; RELATION/FILE à ajouter.
@@ -332,11 +334,10 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       structuré), services (`issue-property.service`, `issue-property-value.service`), store
       `IssuePropertiesStore` + registration + hook `useIssueProperties`. `pnpm check:types` **28/28**, app boote
       (RootStore construit), endpoint agrégé consommable. Détail §20.
-- [~] **Session 8 — UI Propriétés.** ✅ **P1** : settings — gestion des propriétés + options par type. ✅ **P2** :
-  provider réel + rendu dynamique dans la **modale** (création/édition) avec sauvegarde des valeurs.
-  **Vérifiés live** (créer une prop OPTION → la voir dans la modale → valeur persistée). ⏳ **Reste** :
-  sidebar du **détail** (`issue-details/additional-properties`), colonnes **layouts**, types RELATION/FILE.
-  Détail §21.
+- [~] **Session 8 — UI Propriétés.** ✅ **P1** settings (gestion props + options), ✅ **P2** modale (rendu
+  dynamique + sauvegarde), ✅ **P3** sidebar détail (voir/éditer). Custom properties **utilisables de bout en
+  bout** (définir → saisir à la création → voir/éditer sur l'existant). Tous **vérifiés live**. ⏳ **Reste** :
+  colonnes **layouts**, types RELATION/FILE, i18n. Détail §21.
 - [ ] **Session 9 — Polish & tests.** i18n complète, non-régressions, revue, doc.
 
 ---
@@ -734,6 +735,12 @@ OPTION « Severity » + options High/Low créées via l'UI, persistées.
 apparaît sous le type Task → sélection « High » → création → **valeur persistée** (`property-values/` renvoie
 l'option) et relue. `check:types` 28/28, oxlint clean, django check OK.
 
-**⏳ Reste (Session 8 suite / 9)** : sidebar du détail (`issue-details/additional-properties.tsx`) pour
-voir/éditer les valeurs d'un work item existant ; colonnes/badges dans les layouts ; types RELATION (member/
-issue) et FILE ; intégration i18n des libellés.
+**P3 — Sidebar du détail** (`issue-details/additional-properties.tsx`) : `WorkItemAdditionalSidebarProperties`
+reçoit `workItemTypeId` en prop (pas besoin du form context). Rend chaque propriété active du type avec sa
+valeur, éditable si `isEditable`, **persistée immédiatement par propriété** via le value endpoint (upsert
+`{ [propId]: [value] }`). Fetch défs + valeurs via useSWR. **Vérifié live** : Severity=High affiché sur un
+work item, édition → Low persistée et relue.
+
+**⏳ Reste (Session 8 suite / 9)** : colonnes/badges dans les layouts (spreadsheet) ; types RELATION (member/
+issue) et FILE ; i18n des libellés ; `default_value` appliqué à la création ; intégration inline des valeurs
+dans `IssueViewSet.create` (aujourd'hui appel séparé `property-values/` après create).
