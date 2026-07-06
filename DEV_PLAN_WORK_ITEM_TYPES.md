@@ -84,29 +84,25 @@ d'insertion dans `core/` restent inchangés.
 
 ### Phase B1 — API Work Item Types _(socle, à faire en premier)_
 
-- [ ] **Serializers** — créer `apps/api/plane/app/serializers/issue_type.py` :
-  - `IssueTypeSerializer` (champs : `id, name, description, logo_props, is_epic, is_default, is_active, level, workspace, created_at...`).
-  - `ProjectIssueTypeSerializer` (association type ↔ projet, `level`, `is_default`).
-  - Exporter dans `apps/api/plane/app/serializers/__init__.py`.
-- [ ] **ViewSet** — créer `apps/api/plane/app/views/issue_type/base.py` en copiant `StateViewSet` :
-  - `IssueTypeViewSet` : CRUD scoping workspace + projet (via `ProjectIssueType`), action `mark_as_default`.
-  - `get_queryset` filtre par workspace + membership + `is_epic=False` pour l'endpoint « types ».
-  - Permissions : `allow_permission([ROLE.ADMIN, ROLE.MEMBER], ...)` pour l'écriture (mirror State).
-  - Enregistrer l'import dans `apps/api/plane/app/views/__init__.py`.
-- [ ] **URLs** — créer `apps/api/plane/app/urls/issue_type.py` (mirror `state.py`) :
-  - `.../projects/<uuid:project_id>/issue-types/` (list/create)
-  - `.../issue-types/<uuid:pk>/` (retrieve/patch/delete)
-  - `.../issue-types/<uuid:pk>/mark-default/` (action)
-  - Inclure dans `apps/api/plane/app/urls/__init__.py`.
-- [ ] **Exposer `type_id` dans le serializer d'issue interne** — `apps/api/plane/app/serializers/issue.py` :
-      ajouter `type_id` (lecture + écriture, `source="type"`) sur `IssueSerializer` / `IssueCreateSerializer`,
-      en s'inspirant de `apps/api/plane/api/serializers/issue.py:66`. Vérifier list + detail + draft.
-- [ ] **Display property** — vérifier que `issue_type` (déjà dans `display_properties`, cf.
-      `workspace_seed_task.py:157`) est bien pris en compte dans les endpoints de préférences.
-- [ ] **Migration de seed** — nouvelle migration data : pour chaque projet où `is_issue_type_enabled=True`,
-      créer un `IssueType` par défaut (`is_default=True`) + `ProjectIssueType`. Alternative : création à la
-      volée à l'activation (voir Phase B4). Choisir l'une des deux, pas les deux.
-- [ ] **Tests** — `apps/api/tests` : CRUD types, défaut unique par projet, permissions, exposition `type_id`.
+**✅ Phase B1 livrée en Session 1** (voir §12 pour le détail des fichiers et la vérification).
+
+- [x] **Serializers** — `apps/api/plane/app/serializers/issue_type.py` : `IssueTypeSerializer`,
+      `IssueTypeLiteSerializer`, `ProjectIssueTypeSerializer` (+ export). `is_epic` et `workspace` en read-only.
+- [x] **ViewSet** — `apps/api/plane/app/views/issue_type/base.py` : `IssueTypeViewSet` (CRUD workspace-scoped
+      via `ProjectIssueType`, `mark_as_default`, protection du type par défaut) + `DefaultIssueTypeEndpoint`.
+- [x] **URLs** — `apps/api/plane/app/urls/issue_type.py` : `issue-types/` (list/create),
+      `issue-types/<pk>/` (retrieve/patch/delete), `.../mark-default/`, `default-issue-type/`.
+- [x] **Exposer `type_id`** — ajouté en lecture (`IssueSerializer`) et écriture (`IssueCreateSerializer`)
+      dans `apps/api/plane/app/serializers/issue.py`.
+- [x] **Décision seed** → **création à la volée à l'activation** (`DefaultIssueTypeEndpoint`), pas de
+      migration data. Backfill des issues sans type vers le type par défaut. `ProjectIssueType` exporté
+      dans `db/models/__init__.py`.
+- [x] **Tests** — `plane/tests/contract/app/test_issue_type_app.py` : 14 cas (CRUD, défaut unique,
+      permissions ADMIN/GUEST/non-auth, exclusion des épics, backfill, idempotence). **14/14 verts.**
+- [ ] **Display property** (reporté) — `issue_type` existe déjà dans `display_properties`
+      (`workspace_seed_task.py:157`) ; le rendu list/kanban se câblera côté front (Session 3).
+- 🐛 **Bug trouvé & corrigé** : soft-delete Plane ⇒ le `SET_NULL` DB ne se déclenche pas à la suppression
+  d'un type ⇒ `destroy` détache désormais explicitement les work items (`Issue.objects...update(type=None)`).
 
 ### Phase B2 — API Epics
 
@@ -287,7 +283,7 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
 - [x] **Session 0 — Fork & environnement.** ✅ `origin`→`upstream`, branche `feat/work-item-types`, `.env`
       générés + `SECRET_KEY`, `pnpm install` OK, typecheck **28/28 vert**, stack backend Docker up (API HTTP 200,
       migrations OK, tables `issue_types`/`project_issue_types` présentes). Voir §11 pour les commandes.
-- [ ] **Session 1 — Backend Types (B1).** Serializers + ViewSet + URLs + `type_id` dans le serializer app
+- [x] **Session 1 — Backend Types (B1).** ✅ Serializers + ViewSet + URLs + `type_id` dans le serializer app
   - tests. Livrable : on peut créer/lister des types via l'API interne.
 - [ ] **Session 2 — Data layer + store Types.** Types TS + `issue-type.service` + `IssueTypeStore` +
       registration. Livrable : le front peut charger les types.
@@ -366,3 +362,32 @@ pnpm check            # format + lint + types
 
 > Note env : Node 24 installé, projet ciblé sur Node 22.18 (compatible). Le hook de sécurité local bloque
 > les accents dans les commandes shell → messages de commit en ASCII.
+
+---
+
+## 12. Session 1 — Backend Work Item Types (livré)
+
+**Endpoints (API interne `plane/app`)** — tous scoping workspace + projet, permissions type `State` :
+
+| Méthode | Route                                                       | Rôle    | Effet                                                          |
+| ------- | ----------------------------------------------------------- | ------- | -------------------------------------------------------------- |
+| GET     | `/api/workspaces/<slug>/projects/<project_id>/issue-types/` | member+ | liste les types (exclut les épics)                             |
+| POST    | idem                                                        | admin   | crée un type + l'associe au projet                             |
+| GET     | `/api/.../issue-types/<pk>/`                                | member+ | détail                                                         |
+| PATCH   | `/api/.../issue-types/<pk>/`                                | admin   | modifie                                                        |
+| DELETE  | `/api/.../issue-types/<pk>/`                                | admin   | supprime (interdit sur le défaut ; détache les work items)     |
+| POST    | `/api/.../issue-types/<pk>/mark-default/`                   | admin   | définit le type par défaut                                     |
+| POST    | `/api/.../default-issue-type/`                              | admin   | crée le type par défaut à l'activation + backfill (idempotent) |
+
+**Fichiers créés** : `serializers/issue_type.py`, `views/issue_type/base.py`, `urls/issue_type.py`,
+`tests/contract/app/test_issue_type_app.py`.
+**Fichiers modifiés** : `serializers/__init__.py`, `serializers/issue.py` (+`type_id`), `views/__init__.py`,
+`urls/__init__.py`, `db/models/__init__.py` (+`ProjectIssueType`).
+
+**Vérification** : Django `check` OK · routing 401 comme `states` · smoke-test ORM 13/13 ·
+pytest `test_issue_type_app.py` **14/14** · non-régression `contract/app` : 85 passés, les 8 échecs
+sont pré-existants (rate-limit 429 sur les magic-links `test_authentication.py`, reproduits sur base clean).
+
+**À noter pour la suite** : `is_issue_type_enabled` (toggle projet) est déjà writable via le
+`ProjectSerializer` (`fields="__all__"`) ; le front pourra donc l'activer sans changement backend
+supplémentaire. Le type d'épic (`is_epic=True`) reste géré en Session 4 (non créable via cet endpoint).
