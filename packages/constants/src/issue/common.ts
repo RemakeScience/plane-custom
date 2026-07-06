@@ -33,6 +33,8 @@ export enum EIssueGroupByToServerOptions {
   "cycle" = "cycle_id",
   "module" = "issue_module__module_id",
   "target_date" = "target_date",
+  // `project` and `team_project` intentionally share the same backing column.
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   "project" = "project_id",
   "created_by" = "created_by",
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
@@ -208,6 +210,7 @@ export const ISSUE_DISPLAY_PROPERTIES: {
   },
   { key: "modules", titleTranslationKey: "common.module" },
   { key: "cycle", titleTranslationKey: "common.cycle" },
+  { key: "issue_type", titleTranslationKey: "work_item_types.label" },
 ];
 
 export const SPREADSHEET_PROPERTY_LIST: (keyof IIssueDisplayProperties)[] = [
