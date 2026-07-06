@@ -98,6 +98,26 @@ class IssueManager(SoftDeletionManager):
             .exclude(archived_at__isnull=False)
             .exclude(project__archived_at__isnull=False)
             .exclude(is_draft=True)
+            # Epics are issues with an epic type; they must never leak into the
+            # regular work item lists. Using an explicit OR (instead of
+            # `.exclude(type__is_epic=True)`) keeps issues with no type, because
+            # `NOT (NULL = True)` evaluates to NULL and would drop them.
+            .filter(Q(type__isnull=True) | Q(type__is_epic=False))
+        )
+
+
+class EpicManager(SoftDeletionManager):
+    """Mirror of IssueManager restricted to epics (issues with an epic type)."""
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .exclude(state__group=StateGroup.TRIAGE.value)
+            .exclude(archived_at__isnull=False)
+            .exclude(project__archived_at__isnull=False)
+            .exclude(is_draft=True)
+            .filter(type__is_epic=True)
         )
 
 
@@ -170,6 +190,7 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
     )
 
     issue_objects = IssueManager()
+    epic_objects = EpicManager()
 
     class Meta:
         verbose_name = "Issue"

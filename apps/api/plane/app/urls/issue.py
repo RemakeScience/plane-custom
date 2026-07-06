@@ -31,6 +31,7 @@ from plane.app.views import (
     WorkItemDescriptionVersionEndpoint,
     IssueMetaEndpoint,
     IssueDetailIdentifierEndpoint,
+    EpicViewSet,
 )
 
 urlpatterns = [
@@ -38,6 +39,23 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/list/",
         IssueListEndpoint.as_view(),
         name="project-issue",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/epics/",
+        EpicViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-epic",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/epics/<uuid:pk>/",
+        EpicViewSet.as_view(
+            {
+                "get": "retrieve",
+                "put": "update",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="project-epic",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/",

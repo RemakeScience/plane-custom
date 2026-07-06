@@ -129,6 +129,8 @@ from .issue.base import (
     IssueDetailIdentifierEndpoint,
 )
 
+from .issue.epic import EpicViewSet
+
 from .issue.activity import IssueActivityEndpoint
 
 from .issue.archive import IssueArchiveViewSet, BulkArchiveIssuesEndpoint

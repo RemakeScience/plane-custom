@@ -106,20 +106,28 @@ d'insertion dans `core/` restent inchangés.
 
 ### Phase B2 — API Epics
 
-- [ ] **Champ projet** — migration : ajouter `Project.is_epic_enabled = BooleanField(default=False)`
-      (`apps/api/plane/db/models/project.py`) + exposer dans le serializer projet de `plane/app`.
-- [ ] **Type Epic par défaut** — à l'activation des épics sur un projet, garantir l'existence d'un
-      `IssueType(is_epic=True, is_default=True)` associé (endpoint d'activation ou signal).
-- [ ] **Endpoints Epics** — nouveau viewset (ou paramètre) qui liste/détaille les issues avec
-      `type__is_epic=True`. Réutiliser au maximum les viewsets d'issue existants
-      (`apps/api/plane/app/views/issue/base.py`) + un filtre.
-- [ ] **Exclusion des épics des listes normales** — auditer **toutes** les vues de liste d'issues
-      (`issue/base.py`, cycle-issues, module-issues, vues, recherche, sub-issues) et appliquer le filtre
-      `Q(type__isnull=True) | Q(type__is_epic=False)` là où c'est pertinent (aujourd'hui présent seulement
-      dans `archive.py`). ⚠️ Point sensible : c'est la principale source de régressions potentielles.
-- [ ] **Relations épic → work items** — vérifier que le parentage (epic parent d'issues) passe par les
-      relations d'issue existantes ; ajuster si besoin (une épic peut parenter au-delà d'un cycle/module).
-- [ ] **Tests** — listes filtrées, activation, parentage, non-régression des listes d'issues classiques.
+**✅ Phase B2 livrée en Session 4** (voir §17 pour le détail). Foundation (champ projet + type Epic)
+livrée dès la Session 4 initiale ; endpoints + audit d'exclusion + parentage complétés ensuite.
+
+- [x] **Champ projet** — migration 0122 : `Project.is_epic_enabled = BooleanField(default=False)` +
+      exposé dans le serializer projet de `plane/app` + type TS.
+- [x] **Type Epic par défaut** — `DefaultEpicTypeEndpoint` (`/default-epic-type/`) crée
+      l'`IssueType(is_epic=True, is_default=True)` à l'activation (idempotent, pas de backfill).
+- [x] **Endpoints Epics** — `EpicViewSet` (`apps/api/plane/app/views/issue/epic.py`) sous-classe
+      `IssueViewSet`, scope tout sur `Issue.epic_objects` (`type__is_epic=True`) et force le type épic à
+      la création. Routes `epics/` (list/create) + `epics/<pk>/` (retrieve/update/delete).
+- [x] **Exclusion des épics des listes normales** — résolu **au niveau du manager** :
+      `IssueManager.get_queryset()` applique `Q(type__isnull=True) | Q(type__is_epic=False)`. Comme toutes
+      les vraies vues de liste (`issue/base`, cycle, module, view, paginated, search, sub-issues) passent
+      par `Issue.issue_objects`, l'exclusion est automatique et sans audit vue-par-vue. ⚠️ Piège Django NULL
+      évité en utilisant l'OR explicite (pas `.exclude(type__is_epic=True)`). Nouveau manager symétrique
+      `Issue.epic_objects` pour les épics.
+- [x] **Relations épic → work items** — le parentage passe par le FK `Issue.parent` existant : une épic
+      parente des work items normaux (qui restent dans `issue_objects`), l'épic reste hors des listes.
+      Vérifié par test.
+- [x] **Tests** — `plane/tests/contract/app/test_epic_app.py` : 11 cas (create force le type + ignore le
+      type client + 400 sans type + guest 403, list only-epics, **exclusion des listes de work items**,
+      partition des managers, retrieve/update/delete, parentage). **11/11 verts**, 28/28 avec les types.
 
 ### Phase B3 — API Custom Properties
 
@@ -289,12 +297,12 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       badge `IssueTypeIdentifier`, `getIssueTypeIdOnProjectChange` (défaut pré-sélectionné) — §15. Vérifiés
       live end-to-end. ✅ **P3 (optionnelles)** : switcher de type interactif dans le détail, toggle
       display-property `issue_type`, filtres par type (backend + composants) — §16.
-- [~] **Session 4 — Backend Epics (B2).** ✅ **Foundation** : champ `Project.is_epic_enabled` (+ migration
-  0122, exposé via serializer app + type TS), `DefaultEpicTypeEndpoint` (crée le type Epic `is_epic=True`
-  à l'activation, idempotent) — route `/default-epic-type/`. 3 tests verts (17/17 au total). Le type Epic
-  n'est pas sélectionnable dans la création d'issue normale (`IssueTypeSelect` filtre `is_epic=False`).
-  ⏳ **Reste** : endpoints de liste/détail des épics (`type__is_epic=True`), **audit d'exclusion des épics
-  des listes d'issues normales** (point sensible), relations épic→work items.
+- [x] **Session 4 — Backend Epics (B2).** ✅ **Foundation** : champ `Project.is_epic_enabled` (+ migration
+      0122, exposé via serializer app + type TS), `DefaultEpicTypeEndpoint` (crée le type Epic `is_epic=True`
+      à l'activation, idempotent) — route `/default-epic-type/`. ✅ **Endpoints + exclusion** : `EpicViewSet`
+      (routes `epics/`), exclusion des épics des listes via `IssueManager` (+ manager `epic_objects`), parentage
+      vérifié. 11 tests épics verts (28/28 avec les types ; non-régression contract/app OK — seuls les 8
+      échecs rate-limit magic-link pré-existants restent). Détail §17.
 - [ ] **Session 5 — Store + UI Epics.** Store épic réel, page `/epics`, nav, modale. Livrable : épics
       utilisables.
 - [ ] **Session 6 — Backend Propriétés (B3).** Modèles + migrations + serializers + endpoints + valeurs.
@@ -499,3 +507,50 @@ utilise le système typé **rich-filters** (`packages/utils/src/work-item-filter
 `TWorkItemFilterProperty`, créer une config `work-item-type.ts` (mirror de `state.ts`), l'enregistrer dans le
 hook (gate `allowedFilters`), et mapper la clé rich-filter vers le param API `issue_type`. Chantier typé
 multi-fichiers → mérite sa propre session.
+
+---
+
+## 17. Session 4 — Backend Epics (endpoints + exclusion) (livré)
+
+**Décision d'architecture clé** — l'exclusion des épics des listes normales est faite **au niveau du
+manager**, pas par un audit vue-par-vue :
+
+- `IssueManager.get_queryset()` (`Issue.issue_objects`) ajoute `.filter(Q(type__isnull=True) | Q(type__is_epic=False))`.
+  Toutes les vraies listes de work items passent déjà par `issue_objects` (`issue/base`, cycle, module, view,
+  paginated `v2/issues`, search, sub-issues) ⇒ épics exclus **partout, automatiquement**. C'est la parade au
+  risque n°1 du plan (oublier une vue).
+- ⚠️ **Piège Django NULL** évité : `.exclude(type__is_epic=True)` droppe les issues sans type
+  (`NOT (NULL = True)` = NULL = falsy). On utilise l'OR explicite (même pattern que `archive.py`).
+- Nouveau manager symétrique `Issue.epic_objects` = mirror d'`IssueManager` mais `.filter(type__is_epic=True)`.
+  Aucune migration requise (managers non `use_in_migrations`).
+
+**Endpoints (API interne `plane/app`)** — `EpicViewSet` sous-classe `IssueViewSet`, réutilise toute la
+machinerie (grouping, annotations, activités, `partial_update`, `destroy`) :
+
+| Méthode   | Route                           | Effet                                             |
+| --------- | ------------------------------- | ------------------------------------------------- |
+| GET       | `/api/.../projects/<id>/epics/` | liste les épics (`epic_objects`)                  |
+| POST      | idem                            | crée un épic (force le type épic ; 400 si absent) |
+| GET       | `/api/.../epics/<pk>/`          | détail                                            |
+| PUT/PATCH | `/api/.../epics/<pk>/`          | modifie                                           |
+| DELETE    | `/api/.../epics/<pk>/`          | supprime                                          |
+
+- `EpicViewSet.create` force `type_id` = type épic du projet (ignore ce que le client envoie) ; renvoie 400
+  si les épics ne sont pas activés (aucun type épic). Appel `super().create(request, slug=..., project_id=...)`
+  en **kwargs** (le décorateur `allow_permission` lit `kwargs["slug"]`).
+- `get_queryset` scope sur `Issue.epic_objects` ⇒ `list`/`partial_update` restreints aux épics.
+
+**Parentage épic → work items** : via le FK `Issue.parent` existant. Un épic parente des work items normaux
+(qui restent dans `issue_objects`) ; l'épic lui-même reste hors des listes. Vérifié par test.
+
+**Fichiers créés** : `apps/api/plane/app/views/issue/epic.py` (`EpicViewSet`),
+`apps/api/plane/tests/contract/app/test_epic_app.py` (11 cas).
+**Fichiers modifiés** : `apps/api/plane/db/models/issue.py` (`IssueManager` + nouveau `EpicManager` +
+`epic_objects`), `apps/api/plane/app/views/__init__.py` (export), `apps/api/plane/app/urls/issue.py` (routes).
+
+**Vérification** : `manage.py check` OK · `makemigrations --check` → _No changes detected_ · routing épics
+401 non-auth · smoke ORM (managers partitionnent épics/issues, 0 fuite) · pytest `test_epic_app.py` **11/11** ·
+non-régression `contract/app` : 99 passés, seuls les 8 échecs rate-limit magic-link **pré-existants** restent.
+
+**Reste (Session 5)** : store épic réel (remplacer les stubs `ce/store/issue/epic/*`), page `/epics`, nav
+(gate `is_epic_enabled`), modale de création.
