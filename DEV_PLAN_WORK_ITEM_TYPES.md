@@ -778,11 +778,12 @@ dans `IssueViewSet.create` (aujourd'hui appel séparé `property-values/` après
 **B. Colonnes spreadsheet** (`issue-layouts/spreadsheet/custom-property-columns.tsx`, nouveau) :
 
 - Composant autonome, **niveau projet** (skip si vue workspace/pas de `projectId` param). `SpreadsheetCustomPropertyHeaders`
-  (th par propriété active du projet) + `SpreadsheetCustomPropertyValueCells` (td par propriété, **lecture seule**).
+  (th par propriété active du projet) + `SpreadsheetCustomPropertyValueCells` (td par propriété).
   Hook `useProjectCustomProperties` : fetch défs + tri stable (`sort_order` puis `id`) pour que header et cellules
-  rendent le même jeu de colonnes. Valeurs récupérées par issue via `useSWR` (lazy grâce à `RenderIfVisible` →
-  seules les lignes visibles fetchent ; pas de batch endpoint aujourd'hui — tradeoff assumé). Rendu par type
-  (bool Yes/No, option→noms, relation member→nom via `useMember`, relation issue→id court, url/email/file→lien).
+  rendent le même jeu de colonnes. **[MàJ post-S9]** valeurs récupérées en **un seul fetch batch** (endpoint
+  `property-values/` projet, `fetchBulkValues` → cache `valuesByIssue` dans le store) au lieu du N+1 par ligne ; et
+  cellules **éditables inline** (commit via upsert + maj optimiste du store) sauf RELATION (lecture seule, éditée
+  dans modale/sidebar). Rendu par type (bool toggle, option→select, date/number/text/url inputs).
 - Injecté : `<SpreadsheetCustomPropertyHeaders/>` en fin de `<tr>` du header, `<SpreadsheetCustomPropertyValueCells/>`
   en fin de `IssueRowDetails` (après le map `IssueColumn`). Registry keyé `IIssueDisplayProperties` **contourné**
   (colonnes en fin de ligne, hors `WithDisplayPropertiesHOC`).
@@ -836,6 +837,11 @@ complets et polis.**
   `WorkItemFilterRoot` crée/enregistre l'instance dans un **effet** (symétrique avec la suppression). **Vérifié live
   sur hard reload** : plus aucune des 3 erreurs, le dropdown d'ajout s'ouvre et le filtre par type marche.
 
-**⏳ Reste éventuel (post-S9)** : upload binaire réel pour FILE ; édition inline des propriétés custom dans le
-spreadsheet (aujourd'hui lecture seule) ; batch endpoint de valeurs pour éviter le N+1 sur les lignes visibles ;
-colonnes custom en vue workspace (multi-projet) ; re-vérif live du filtre par type via `pnpm dev`.
+**⏳ Reste éventuel (post-S9)** : ~~batch endpoint~~ ✅ fait ; ~~édition inline spreadsheet~~ ✅ fait ; upload binaire
+réel pour FILE (en cours) ; colonnes custom en vue workspace (multi-projet).
+
+**Amélioration spreadsheet (post-S9, livré)** : endpoint batch `IssuePropertyValuesBulkEndpoint`
+(POST `.../property-values/` avec `{issue_ids}` → `{issue_id:{prop_id:[vals]}}`, +2 tests) ; `fetchBulkValues` +
+cache `valuesByIssue` dans `IssuePropertiesStore` ; `custom-property-columns.tsx` fetch batch unique (via le header,
+`issueIds` threadé table→header) + **cellules éditables** (commit upsert + optimiste, RELATION lecture seule). Vérifié
+live sur le layout spreadsheet (colonne « Severity », édition High persistée, 0 appel per-issue).
