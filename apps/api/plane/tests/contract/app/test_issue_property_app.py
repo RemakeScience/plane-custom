@@ -367,3 +367,32 @@ class TestIssueCreateWithPropertyValues(TestIssuePropertyBase):
         assert response.status_code == status.HTTP_201_CREATED
         issue_id = response.json()["id"]
         assert not IssuePropertyValue.objects.filter(issue_id=issue_id).exists()
+
+
+@pytest.mark.contract
+class TestIssueTypeFilter(TestIssuePropertyBase):
+    @pytest.mark.django_db
+    def test_filterset_narrows_by_issue_type(self, workspace, create_user):
+        from django.http import QueryDict
+
+        from plane.utils.filters import IssueFilterSet
+
+        project = self.create_project(workspace, create_user)
+        task_type = self.make_type(workspace, project, name="Task")
+        bug_type = IssueType.objects.create(workspace=workspace, name="Bug")
+        ProjectIssueType.objects.create(issue_type=bug_type, project=project)
+
+        task_issue = self.make_issue(workspace, project, name="A task")
+        task_issue.type = task_type
+        task_issue.save()
+        bug_issue = self.make_issue(workspace, project, name="A bug")
+        bug_issue.type = bug_type
+        bug_issue.save()
+
+        qd = QueryDict(mutable=True)
+        qd.setlist("issue_type__in", [str(task_type.id)])
+        filterset = IssueFilterSet(data=qd, queryset=Issue.objects.filter(project=project))
+
+        assert filterset.is_valid()
+        result = Issue.objects.filter(project=project).filter(filterset.build_combined_q())
+        assert set(result.values_list("id", flat=True)) == {task_issue.id}
