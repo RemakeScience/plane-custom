@@ -338,7 +338,12 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
   dynamique + sauvegarde), ✅ **P3** sidebar détail (voir/éditer). Custom properties **utilisables de bout en
   bout** (définir → saisir à la création → voir/éditer sur l'existant). Tous **vérifiés live**. ⏳ **Reste** :
   colonnes **layouts**, types RELATION/FILE, i18n. Détail §21.
-- [ ] **Session 9 — Polish & tests.** i18n complète, non-régressions, revue, doc.
+- [x] **Session 9 — Polish & tests.** ✅ Backend polish (`default_value` à la création + valeurs inline dans
+      `IssueViewSet.create` + endpoint `epics-detail/`), ✅ colonnes de propriétés custom dans le **spreadsheet**
+      (lecture seule, niveau projet), ✅ types **RELATION** (member/issue) **et FILE** (lien) dans modale +
+      sidebar + création dans les settings, ✅ **i18n** des libellés (namespace `...properties.ce`, 19 locales
+      100% sync). Non-régression : 115 tests contract/app (8 rate-limit pré-existants), check:types 28/28, lint web
+      0 erreur. Détail §22.
 
 ---
 
@@ -744,3 +749,65 @@ work item, édition → Low persistée et relue.
 **⏳ Reste (Session 8 suite / 9)** : colonnes/badges dans les layouts (spreadsheet) ; types RELATION (member/
 issue) et FILE ; i18n des libellés ; `default_value` appliqué à la création ; intégration inline des valeurs
 dans `IssueViewSet.create` (aujourd'hui appel séparé `property-values/` après create).
+
+---
+
+## 22. Session 9 — Polish & tests (livré)
+
+**A. Backend polish** (`issue_property/base.py` + `issue/base.py`) :
+
+- Helpers réutilisables extraits dans `issue_property/base.py` : `default_values_payload(type_id)` (défauts
+  d'un type — options `is_default` pour OPTION, `default_value` sinon), `build_property_values(project,
+  issue_id, payload, enforce_required)` (validation + construction des lignes), `persist_property_values`
+  (hard-replace transactionnel), `write_property_values_for_issue(project, issue, inline_payload,
+  apply_defaults, enforce_required)`. `IssuePropertyValueEndpoint.post` refactoré pour les réutiliser (comportement
+  strict inchangé : `enforce_required=True`).
+- `IssueViewSet.create` : après `serializer.save()`, appel best-effort (jamais bloquant, `enforce_required=False`)
+  qui **applique les défauts du type** puis **écrase avec les valeurs inline** envoyées sous `property_values`
+  dans le payload de création. Import local pour éviter tout cycle.
+- **`default_value` visible dans la modale** : `modal-additional-properties.tsx` seed les champs à la sélection du
+  type (create only, `useEffect` sur `propertyIdsKey`/`typeId`) via `getPropertyDefaultValue` — les défauts
+  s'affichent et transitent par le flux d'upsert existant (donc pas écrasés par l'appel séparé qui envoie `[]`
+  pour les props non touchées).
+- Endpoint **`epics-detail/`** ajouté (`urls/issue.py`) → `IssueDetailEndpoint` (name `project-epic-detail`),
+  miroir de `issues-detail/` ; corrige le 404 non fatal du GANTT épics. Vérifié : `resolve()` → `IssueDetailEndpoint`.
+- 4 nouveaux tests (`test_issue_property_app.py::TestIssueCreateWithPropertyValues`) : backfill TEXT, backfill
+  option `is_default`, inline override du défaut, pas de valeurs sans type. **16 tests props verts** ; suite
+  contract/app **115 passés** (8 rate-limit magic-link pré-existants).
+
+**B. Colonnes spreadsheet** (`issue-layouts/spreadsheet/custom-property-columns.tsx`, nouveau) :
+
+- Composant autonome, **niveau projet** (skip si vue workspace/pas de `projectId` param). `SpreadsheetCustomPropertyHeaders`
+  (th par propriété active du projet) + `SpreadsheetCustomPropertyValueCells` (td par propriété, **lecture seule**).
+  Hook `useProjectCustomProperties` : fetch défs + tri stable (`sort_order` puis `id`) pour que header et cellules
+  rendent le même jeu de colonnes. Valeurs récupérées par issue via `useSWR` (lazy grâce à `RenderIfVisible` →
+  seules les lignes visibles fetchent ; pas de batch endpoint aujourd'hui — tradeoff assumé). Rendu par type
+  (bool Yes/No, option→noms, relation member→nom via `useMember`, relation issue→id court, url/email/file→lien).
+- Injecté : `<SpreadsheetCustomPropertyHeaders/>` en fin de `<tr>` du header, `<SpreadsheetCustomPropertyValueCells/>`
+  en fin de `IssueRowDetails` (après le map `IssueColumn`). Registry keyé `IIssueDisplayProperties` **contourné**
+  (colonnes en fin de ligne, hors `WithDisplayPropertiesHOC`).
+
+**C. Types RELATION & FILE** :
+
+- Composant partagé `ce/components/issues/property-fields/relation-field.tsx` (`PropertyRelationField`) : MEMBER →
+  `MemberDropdown` (single/multi selon `is_multi`, résout les noms) ; ISSUE → `ExistingIssuesListModal` + chips
+  (label capturé depuis la sélection). Rendu dans la modale (`PropertyField`) et la sidebar (`SidebarPropertyField`),
+  qui reçoivent désormais `projectId`/`workspaceSlug`.
+- **FILE** = input `url` (lien de fichier stocké en `value_text`). ⚠️ Upload binaire réel (nouveau type d'asset
+  backend + flux S3 presigné) **différé** — chantier à part entière.
+- Settings (`type-properties.tsx`) : options **Relation** et **File** ajoutées + sélecteur member/issue (envoie
+  `relation_type` au create, `null` sinon).
+
+**D. i18n** : namespace dédié `work_item_types.settings.properties.ce.*` (28 leaves : labels de type, required/multi,
+placeholders, relation, valeurs bool, erreurs). `t()` câblé dans les 5 composants (settings, modale, sidebar,
+relation-field, spreadsheet) + réutilisation `common.error`/`common.cancel`. Traduit dans **les 18 autres locales**
+(règles DNT respectées : `URL` et `https://…` verbatim ; « Work item »/« Boolean »/« Multi » traduits). `sync:check`
+**19 locales à 100%**, `generate:types` OK (3865 clés).
+
+**Vérifié** : `check:types` **28/28**, lint web **0 erreur** (978 warnings < budget 11957), format oxfmt clean,
+django check OK, contract/app 115 passés, `epics-detail/` résout. **Work Item Types + Epics + Custom Properties =
+complets et polis.**
+
+**⏳ Reste éventuel (post-S9)** : upload binaire réel pour FILE ; édition inline des propriétés custom dans le
+spreadsheet (aujourd'hui lecture seule) ; batch endpoint de valeurs pour éviter le N+1 sur les lignes visibles ;
+colonnes custom en vue workspace (multi-projet).
