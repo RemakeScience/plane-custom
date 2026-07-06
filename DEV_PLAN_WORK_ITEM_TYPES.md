@@ -822,11 +822,14 @@ complets et polis.**
   `issueTypeIds` injecté par `project-level.tsx` (+ **fetch des types au montage** pour que le filtre soit dispo, à
   l'image du filtre legacy). Pas de mapping API à écrire : le rich-filter sérialise `issue_type__in` dans le blob JSON
   `filters` que le backend lit directement.
-- **Vérifié E2E via API** (contexte navigateur authentifié) : `?filters={"issue_type__in":[TaskId]}` → 3 résultats,
-  `[BugId]` → 0 (les 3 issues WIT sont de type Task) ; statut 200 (condition acceptée par le filterset). `check:types`
-  28/28, lint 0 erreur. ⚠️ **UI non pilotée en live** : le serveur `react-router dev` lancé seul (hors `pnpm dev`) est
-  en état d'hydratation dégradé (« filter instance not available » sur toute la barre de filtres, filtre State compris)
-  → dropdown non ouvrable dans cet environnement. À revérifier via `pnpm dev` normal.
+- **Vérifié live end-to-end** (Chrome DevTools, `pnpm dev`) : le filtre **« Work item type »** apparaît dans le
+  dropdown d'ajout de filtre (aux côtés de State/Priority/…), sous-menu Task/Bug ; sélection **Bug → 0** résultat
+  (« No matching results »), **Task → 3** (WIT-6/5/1). Côté API : `?filters={"issue_type__in":[TaskId]}` → 3,
+  `[BugId]` → 0, statut 200. `check:types` 28/28, lint 0 erreur.
+- ⚠️ **Piège dev** : en `dev`, un **hard reload** de la page issues casse le contexte de l'instance de filtre
+  (erreurs d'hydratation SSR next-themes → « filter instance not available », toute la barre de filtres KO — **pré-
+  existant**, vérifié en retirant mes changements : même symptôme). Une **navigation client** (soft nav via la
+  sidebar, ex. Epics → Work items) ré-initialise l'instance et le filtre fonctionne. Non bloquant en build prod.
 
 **⏳ Reste éventuel (post-S9)** : upload binaire réel pour FILE ; édition inline des propriétés custom dans le
 spreadsheet (aujourd'hui lecture seule) ; batch endpoint de valeurs pour éviter le N+1 sur les lignes visibles ;
