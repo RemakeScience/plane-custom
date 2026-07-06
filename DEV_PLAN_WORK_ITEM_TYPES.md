@@ -131,31 +131,34 @@ livrée dès la Session 4 initiale ; endpoints + audit d'exclusion + parentage c
 
 ### Phase B3 — API Custom Properties
 
-- [ ] **Modèles** — créer `apps/api/plane/db/models/issue_property.py` :
-  - `IssueProperty` : `issue_type (FK)`, `name`, `display_name`, `property_type` (enum : `TEXT, DECIMAL,
-OPTION, BOOLEAN, DATETIME, RELATION, URL, EMAIL, FILE`), `relation_type` (member/issue si RELATION),
-    `is_required`, `is_multi`, `is_active`, `default_value` (JSON), `settings` (JSON), `sort_order`,
-    `logo_props`, `external_source/external_id`.
-  - `IssuePropertyOption` : `property (FK)`, `name`, `description`, `logo_props`, `is_active`,
-    `is_default`, `sort_order`, `parent` (pour options hiérarchiques éventuelles).
-  - `IssuePropertyValue` : `issue (FK)`, `property (FK)`, colonnes de valeur typées
-    (`value_text`, `value_decimal`, `value_boolean`, `value_datetime`, `value_uuid`, `value_option (FK)`),
-    ou une seule colonne `value` JSON + `value_option`. **Décision de schéma à prendre.**
-  - Exporter dans `apps/api/plane/db/models/__init__.py` (ne pas oublier `ProjectIssueType` non plus,
-    actuellement non exporté).
-- [ ] **Migration** — création des 3 tables (`issue_properties`, `issue_property_options`,
-      `issue_property_values`) + contraintes d'unicité (`issue+property`, `property+name` sur options).
-- [ ] **Serializers** — `IssuePropertySerializer`, `IssuePropertyOptionSerializer`,
-      `IssuePropertyValueSerializer` (+ endpoint « properties AND options » agrégé, cf. fetch-keys front).
-- [ ] **ViewSets + URLs** :
-  - CRUD définitions de propriétés (scoping type) : `.../issue-types/<id>/properties/`.
-  - CRUD options : `.../properties/<id>/options/`.
-  - Lecture/écriture des **valeurs** par issue : `.../issues/<id>/property-values/` (bulk upsert).
-  - Endpoint agrégé `.../issue-types/properties-and-options/` (aligne `WORK_ITEM_TYPES_PROPERTIES_AND_OPTIONS`).
-- [ ] **Validation** — champs `is_required` obligatoires à la création d'issue, cohérence type/valeur.
-- [ ] **Intégration create/update issue** — accepter un payload de valeurs de propriété à la création/màj
-      d'issue (transactionnel avec l'issue).
-- [ ] **Tests** — CRUD définitions/options/valeurs, validation requis, filtrage par type, multi-valeurs.
+**✅ Phase B3 livrée en Session 6** (voir §19). Schéma **EE-compat, colonnes de valeur typées**.
+
+- [x] **Modèles** — `apps/api/plane/db/models/issue_property.py` : `IssueProperty` (issue*type FK,
+      name, display_name, property_type, relation_type, is_required, is_multi, is_active, default_value,
+      settings, sort_order, logo_props, external*\*), `IssuePropertyOption` (property FK, name, description,
+      logo_props, is_active, is_default, sort_order, parent), `IssuePropertyValue` (issue FK, property FK,
+      **colonnes typées** value_text/value_boolean/value_decimal/value_datetime/value_uuid + value_option FK).
+      Enums `PropertyTypeEnum`/`RelationTypeEnum`. Tous extends `ProjectBaseModel` (project+workspace auto).
+      Exportés dans `db/models/__init__.py`.
+- [x] **Migration** — `0123_...` : 3 tables (`issue_properties`, `issue_property_options`,
+      `issue_property_values`) + contrainte unique `(property, name)` sur options (deleted_at null). Appliquée.
+      (Pas d'unicité `issue+property` car le multi-valeur = plusieurs lignes.)
+- [x] **Serializers** — `IssuePropertySerializer`, `IssuePropertyOptionSerializer`,
+      `IssuePropertyValueSerializer` (`serializers/issue_property.py`).
+- [x] **ViewSets + URLs** (`views/issue_property/base.py`, `urls/issue_property.py`) :
+  - CRUD définitions (scoping type) : `.../issue-types/<type_id>/properties/[<pk>/]` (ADMIN écrit).
+  - CRUD options : `.../issue-properties/<property_id>/options/[<pk>/]` (ADMIN écrit).
+  - Valeurs par issue (bulk upsert typé) : `.../issues/<issue_id>/property-values/` (GET/POST).
+  - Agrégé : `.../issue-property-types/` (propriétés + options imbriquées ; aligne le fetch-key front).
+- [x] **Validation** — `is_required` (rejet si vide), `is_multi` (rejet si >1 valeur pour non-multi),
+      cohérence type/valeur (coercition typée DECIMAL/DATETIME/BOOLEAN/OPTION/RELATION avant écriture,
+      400 si invalide). Validation **complète avant** la transaction (pas d'écriture partielle).
+- [~] **Intégration create/update issue** — **différée** : le front appelle `property-values/` après
+  create (comme le stub provider `handleCreateUpdatePropertyValues`). Câblage inline dans `IssueViewSet`
+  = follow-up (Session 8/9), évite de toucher le viewset d'issue partagé maintenant.
+- [x] **Tests** — `plane/tests/contract/app/test_issue_property_app.py` : 12 cas (CRUD props, options +
+      agrégé, valeurs texte/option/multi, requis, non-multi rejette, décimal invalide, upsert remplace,
+      guest 403). **12/12 verts.**
 
 ### Phase B4 — Activation / gating backend
 
@@ -309,8 +312,10 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       `/epics` (route + layout root + header + modale), nav gated `is_epic_enabled`, toggle settings. Fixé un
       500 latent (`activity.py`) et câblé la création via `/epics/`. **Vérifié live end-to-end** (toggle →
       nav → page → créer épic → détail/activité → exclusion des listes). Détail §18.
-- [ ] **Session 6 — Backend Propriétés (B3).** Modèles + migrations + serializers + endpoints + valeurs.
-      Livrable : API propriétés.
+- [x] **Session 6 — Backend Propriétés (B3).** ✅ 3 modèles (schéma EE-compat, colonnes typées) + migration
+      0123 + serializers + viewsets/URLs (CRUD props/options, valeurs bulk upsert typé, endpoint agrégé) +
+      validation (requis/multi/coercition). **12/12 tests** ; non-régression contract/app OK. Vérifié live
+      (props/options/valeurs multi + agrégé + cascade) sur le projet WIT. Détail §19.
 - [ ] **Session 7 — Data layer + stores Propriétés.** Types, services, stores propriétés/valeurs.
 - [ ] **Session 8 — UI Propriétés.** Provider réel, rendu dynamique (modale/sidebar/layout), settings des
       propriétés par type. Livrable : propriétés custom de bout en bout.
@@ -614,3 +619,43 @@ imputable à la feature (restent les warnings hydration/refs pré-existants).
 **⏳ Reste (follow-up)** : endpoint `epics-detail/` (seulement layout GANTT/spreadsheet avec
 `expand=issue_relation`, 404 non fatal) ; filtres rich-filter par type (déjà noté §16) ; épic detail comme
 **page** dédiée (aujourd'hui via peek/detail générique).
+
+---
+
+## 19. Session 6 — Backend Custom Properties (livré)
+
+**Décision de schéma** (§10 #2/#3) : schéma **EE-compat** avec **colonnes de valeur typées**. Tables
+`issue_properties`, `issue_property_options`, `issue_property_values`.
+
+**Modèles** (`db/models/issue_property.py`, tous `ProjectBaseModel` → project+workspace auto) :
+
+- `IssueProperty` : `issue_type` FK, `name`, `display_name`, `description`, `logo_props`, `property_type`
+  (`PropertyTypeEnum` : TEXT/DECIMAL/OPTION/BOOLEAN/DATETIME/RELATION/URL/EMAIL/FILE), `relation_type`
+  (`RelationTypeEnum` ISSUE/MEMBER), `is_required`, `is_multi`, `is_active`, `default_value`, `settings`,
+  `sort_order`, `external_*`.
+- `IssuePropertyOption` : `property` FK, `name`, `description`, `logo_props`, `is_active`, `is_default`,
+  `sort_order`, `parent` (self FK). Unique `(property, name)` quand `deleted_at` null.
+- `IssuePropertyValue` : `issue` FK, `property` FK, colonnes typées `value_text`/`value_boolean`/
+  `value_decimal`/`value_datetime`/`value_uuid` + `value_option` FK. **1 ligne = 1 valeur** (multi-valeur =
+  plusieurs lignes ⇒ pas d'unicité `issue+property`).
+
+**Endpoints** (`views/issue_property/base.py`, `urls/issue_property.py`) :
+
+- `GET/POST /issue-types/<type_id>/properties/[<pk>/]` — CRUD définitions (member+ lit, ADMIN écrit).
+- `GET/POST /issue-properties/<property_id>/options/[<pk>/]` — CRUD options.
+- `GET /issue-property-types/` — **agrégé** : toutes les props du projet + options imbriquées (fetch-key front).
+- `GET/POST /issues/<issue_id>/property-values/` — lit / **bulk upsert typé** `{ property_id: [values] }`.
+
+Le bulk upsert **valide tout avant** d'écrire (requis, non-multi ≤ 1, coercition typée → 400 si invalide),
+puis remplace transactionnellement (hard-delete + `bulk_create`). Piège évité : ne pas appeler la méthode
+`get` décorée depuis `post` (le décorateur lit `kwargs["slug"]` → KeyError → 400) ⇒ extrait dans
+`_serialize_values`.
+
+**Vérification** : `manage.py check` OK, migration 0123 appliquée (3 tables), routing 401,
+pytest `test_issue_property_app.py` **12/12**, non-régression contract/app (111 passés, 8 rate-limit
+pré-existants). **Live (WIT)** : prop OPTION multi + 2 options → agrégé OK → POST valeurs multi 200 + relu →
+DELETE 204 cascade.
+
+**Reste (follow-ups)** : intégration inline des valeurs dans `IssueViewSet.create/update` (le front appelle
+`property-values/` après create) ; filtrage/tri par valeur ; `default_value` appliqué à la création
+(Sessions 7/8/9).
