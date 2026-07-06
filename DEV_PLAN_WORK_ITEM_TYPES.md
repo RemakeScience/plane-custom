@@ -235,17 +235,21 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
 
 ### Propriétés personnalisées
 
-- [ ] `issue-modal/provider.tsx` — remplacer les no-ops par la vraie logique :
-      `getIssueTypeIdOnProjectChange`, `getActiveAdditionalPropertiesLength`, `handlePropertyValuesValidation`,
-      `handleCreateUpdatePropertyValues`, `handleProjectEntitiesFetch`.
-- [ ] `issue-modal/modal-additional-properties.tsx` — rendu **dynamique** des champs custom selon
-      `property_type` (text, number, boolean, date, select simple/multi, member, relation…).
+- [x] **Settings — gestion des propriétés par type** (Session 8 P1) : `work-item-types/type-properties.tsx`
+      (`WorkItemTypeProperties` + `OptionsManager` inline) — chaque type dépliable dans la page settings,
+      CRUD propriétés (nom, type, required, multi) + options pour les OPTION. Vérifié live. Voir §21.
+- [x] `issue-modal/provider.tsx` (Session 8 P2) — provider réel : `getActiveAdditionalPropertiesLength`,
+      `handlePropertyValuesValidation` (requis), `handleCreateUpdatePropertyValues` (upsert via le value
+      service, ref pour valeurs fraîches), `handleProjectEntitiesFetch`.
+- [x] `issue-modal/modal-additional-properties.tsx` (Session 8 P2) — rendu **dynamique** par `property_type`
+      (text/url/email/number/date/boolean/dropdown simple+multi), lié aux valeurs du contexte modale ; fetch
+      des définitions + seed des valeurs existantes. **Vérifié live** : Severity=High persisté à la création.
+      (Backend : `type_id` ajouté à la réponse `.values()` de create.)
 - [ ] `issue-details/additional-properties.tsx` — affichage/édition des valeurs dans la sidebar du détail
       (et peek). Mirror des consommateurs `apps/web/core/components/issues/issue-detail/sidebar.tsx:269`.
 - [ ] `issue-layouts/additional-properties.tsx` — valeurs custom en colonnes (spreadsheet) / badges.
-- [ ] Composants de saisie réutilisables par type de propriété (dans `@plane/ui` ou local) :
-      `PropertyInput` (text/number/url/email), `PropertyOptionSelect`, `PropertyDatePicker`,
-      `PropertyBooleanToggle`, `PropertyMemberSelect`.
+- [ ] Composants de saisie réutilisables (RELATION member/issue, FILE) — actuellement TEXT/DECIMAL/BOOLEAN/
+      DATETIME/URL/EMAIL/OPTION couverts ; RELATION/FILE à ajouter.
 
 ### Epics
 
@@ -328,8 +332,11 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       structuré), services (`issue-property.service`, `issue-property-value.service`), store
       `IssuePropertiesStore` + registration + hook `useIssueProperties`. `pnpm check:types` **28/28**, app boote
       (RootStore construit), endpoint agrégé consommable. Détail §20.
-- [ ] **Session 8 — UI Propriétés.** Provider réel, rendu dynamique (modale/sidebar/layout), settings des
-      propriétés par type. Livrable : propriétés custom de bout en bout.
+- [~] **Session 8 — UI Propriétés.** ✅ **P1** : settings — gestion des propriétés + options par type. ✅ **P2** :
+  provider réel + rendu dynamique dans la **modale** (création/édition) avec sauvegarde des valeurs.
+  **Vérifiés live** (créer une prop OPTION → la voir dans la modale → valeur persistée). ⏳ **Reste** :
+  sidebar du **détail** (`issue-details/additional-properties`), colonnes **layouts**, types RELATION/FILE.
+  Détail §21.
 - [ ] **Session 9 — Polish & tests.** i18n complète, non-régressions, revue, doc.
 
 ---
@@ -696,3 +703,37 @@ propriétés scopées type, CRUD options scopées propriété) ; `issue-property
 
 **Vérification** : `pnpm check:types` **28/28**, oxlint 0 warning, app rendue (RootStore construit avec
 `IssuePropertiesStore`), endpoint agrégé consommé (200) via la session navigateur.
+
+---
+
+## 21. Session 8 — UI Propriétés (P1 settings + P2 modale) (livré)
+
+**P1 — Gestion des propriétés dans les settings** (`work-item-types/type-properties.tsx`) : chaque type de la
+page Work Item Types est **dépliable** (chevron) et affiche `WorkItemTypeProperties` — liste des propriétés
+custom (badge type + Required/Multi), ajout inline (nom → slug auto, type parmi Text/Number/Boolean/Date/URL/
+Email/Dropdown, toggles Required/Multi), suppression, et `OptionsManager` inline pour les propriétés OPTION
+(ajout/suppression d'options). Consomme `IssuePropertiesStore` (`fetchProjectProperties` au montage + CRUD).
+`settings-root.tsx` : état `expandedTypeId` + fetch des propriétés à l'activation. **Vérifié live** : prop
+OPTION « Severity » + options High/Low créées via l'UI, persistées.
+
+**P2 — Rendu + sauvegarde dans la modale** :
+
+- `issue-modal/provider.tsx` (CE) : provider réel. `getActiveAdditionalPropertiesLength` (compte les props
+  actives du type courant via `watch("type_id")`), `handlePropertyValuesValidation` (requis → errors),
+  `handleCreateUpdatePropertyValues` (bulk upsert via `IssuePropertyValueService`), `handleProjectEntitiesFetch`.
+  Les valeurs courantes sont gardées dans un **ref** pour que les handlers impératifs ne lisent jamais un état
+  périmé.
+- `issue-modal/modal-additional-properties.tsx` (CE) : lit `type_id` via `useFormContext`, rend un champ par
+  propriété active selon `property_type` (text/url/email/number/date/boolean/dropdown simple+multi), lié aux
+  valeurs du contexte modale. `useSWR` pour charger les définitions du projet et **seed** les valeurs
+  existantes (édition).
+- Backend : `type_id` ajouté à la réponse `.values()` de `IssueViewSet.create` (le front en a besoin pour
+  scoper les valeurs à persister).
+
+**Vérifié live (WIT)** : ouverture de la modale de création → le champ **Severity** (dropdown High/Low)
+apparaît sous le type Task → sélection « High » → création → **valeur persistée** (`property-values/` renvoie
+l'option) et relue. `check:types` 28/28, oxlint clean, django check OK.
+
+**⏳ Reste (Session 8 suite / 9)** : sidebar du détail (`issue-details/additional-properties.tsx`) pour
+voir/éditer les valeurs d'un work item existant ; colonnes/badges dans les layouts ; types RELATION (member/
+issue) et FILE ; intégration i18n des libellés.
