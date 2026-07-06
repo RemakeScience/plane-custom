@@ -162,17 +162,17 @@ OPTION, BOOLEAN, DATETIME, RELATION, URL, EMAIL, FILE`), `relation_type` (member
 
 ### Types (`packages/types/src`)
 
-- [ ] `packages/types/src/issues/issue-type.ts` (nouveau) : `TIssueType`, `TProjectIssueType`.
+- [x] `packages/types/src/issues/issue-type.ts` : `TIssueType`, `TProjectIssueType` (Session 2, exporté).
+      Aussi ajouté `is_issue_type_enabled?` sur le type projet (`project/projects.ts`).
 - [ ] `packages/types/src/issues/issue-property.ts` (nouveau) : `EIssuePropertyType` (enum),
       `TIssueProperty`, `TIssuePropertyOption`, `TIssuePropertySettings`.
 - [ ] Remplacer `TIssuePropertyValues = Record<string, unknown>` par un type structuré
       (`packages/types/src/issues/issue-property-values.ts`), garder la rétrocompat des imports.
-- [ ] Exporter tout depuis `packages/types/src/index.ts`.
 
 ### Services (`apps/web/core/services`)
 
-- [ ] `apps/web/core/services/issue-type.service.ts` : CRUD types + `mark_as_default` (mirror
-      `module.service.ts`, hérite de `APIService`).
+- [x] `apps/web/core/services/issue-type.service.ts` : CRUD types + `markAsDefault` + `enable`
+      (Session 2, mirror `module.service.ts`).
 - [ ] `apps/web/core/services/issue-property.service.ts` : CRUD propriétés + options + `propertiesAndOptions`.
 - [ ] `apps/web/core/services/issue-property-value.service.ts` : lecture/upsert des valeurs par issue.
 - [ ] `apps/web/core/services/epic.service.ts` (ou réutiliser l'issue service avec le filtre épic).
@@ -186,18 +186,15 @@ OPTION, BOOLEAN, DATETIME, RELATION, URL, EMAIL, FILE`), `relation_type` (member
 
 Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*`.
 
-- [ ] `apps/web/ce/store/issue-types/` (nouveau) :
-  - `issue-type.store.ts` : `IssueTypeStore` — map `issueTypeId → TIssueType`, fetch par projet/workspace,
-    CRUD, getters (`getIssueTypeById`, `getProjectIssueTypeIds`, `getDefaultIssueType`,
-    `getIssueTypeProperties`).
-  - `issue-property.store.ts` : définitions + options (fetch agrégé « properties-and-options »).
-  - `issue-property-value.store.ts` : valeurs par issue (lecture/écriture, cache par issueId).
+- [x] `apps/web/ce/store/issue-types.store.ts` : `IssueTypesStore` (Session 2) — maps `issueTypeMap` + `projectIssueTypeIdsMap` + `fetchedMap`, getters (`getIssueTypeById`, `getProjectIssueTypeIds`,
+      `getProjectIssueTypes`, `getProjectDefaultIssueTypeId`, `isIssueTypeEnabledForProject`),
+      fetch + CRUD + `enableIssueTypes` (optimiste avec revert).
+- [x] **Registration** — `issueTypes` branché dans `apps/web/core/store/root.store.ts` (constructeur +
+      `resetOnSignOut`) + typé dans l'interface, via `@/plane-web/store/issue-types.store`.
+- [x] Hook `apps/web/core/hooks/store/use-issue-types.ts` (`useIssueTypes()`).
+- [ ] `issue-property.store.ts` + `issue-property-value.store.ts` (Session 7).
 - [ ] **Activer le store épic** — remplacer les stubs `apps/web/ce/store/issue/epic/{issue,filter}.store.ts`
-      (retirer `// will never be used`) par une vraie implémentation reliée au filtre `is_epic=True`.
-- [ ] **Registration** — brancher les nouveaux stores dans `apps/web/core/store/root.store.ts`
-      (mirror `this.state = new StateStore(...)` lignes 121-122 et 155-156), + typage dans l'interface du root.
-- [ ] Hooks d'accès : `apps/web/core/hooks/store/` (mirror `use-issue-detail`, exposer
-      `useIssueTypes()`, `useIssueProperties()`).
+      (retirer `// will never be used`) par une vraie implémentation reliée au filtre `is_epic=True` (Session 5).
 
 ---
 
@@ -285,8 +282,8 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       migrations OK, tables `issue_types`/`project_issue_types` présentes). Voir §11 pour les commandes.
 - [x] **Session 1 — Backend Types (B1).** ✅ Serializers + ViewSet + URLs + `type_id` dans le serializer app
   - tests. Livrable : on peut créer/lister des types via l'API interne.
-- [ ] **Session 2 — Data layer + store Types.** Types TS + `issue-type.service` + `IssueTypeStore` +
-      registration. Livrable : le front peut charger les types.
+- [x] **Session 2 — Data layer + store Types.** ✅ Types TS + `issue-type.service` + `IssueTypesStore` +
+      hook `useIssueTypes` + registration. Typecheck 28/28, app boote sans erreur (RootStore construit). Détail §13.
 - [ ] **Session 3 — UI Types.** `issue-type-select`, `issue-type-switcher`/identifier, filtres, settings de
       gestion des types + toggle projet. Livrable : types utilisables de bout en bout.
 - [ ] **Session 4 — Backend Epics (B2).** Champ `is_epic_enabled`, endpoints filtrés, audit du filtrage
@@ -391,3 +388,30 @@ sont pré-existants (rate-limit 429 sur les magic-links `test_authentication.py`
 **À noter pour la suite** : `is_issue_type_enabled` (toggle projet) est déjà writable via le
 `ProjectSerializer` (`fields="__all__"`) ; le front pourra donc l'activer sans changement backend
 supplémentaire. Le type d'épic (`is_epic=True`) reste géré en Session 4 (non créable via cet endpoint).
+
+---
+
+## 13. Session 2 — Data layer + store Types (livré)
+
+**Fichiers créés** :
+
+- `packages/types/src/issues/issue-type.ts` — `TIssueType`, `TProjectIssueType` (exportés dans l'index).
+- `apps/web/core/services/issue-type.service.ts` — `IssueTypeService` (fetchAll, retrieve, create, update,
+  remove, markAsDefault, enable).
+- `apps/web/ce/store/issue-types.store.ts` — `IssueTypesStore` (MobX, injecté via `@/plane-web/store`).
+- `apps/web/core/hooks/store/use-issue-types.ts` — hook `useIssueTypes()`.
+
+**Fichiers modifiés** : `packages/types/src/index.ts` (export), `packages/types/src/project/projects.ts`
+(+`is_issue_type_enabled?`), `apps/web/core/store/root.store.ts` (déclaration + instanciation dans les
+deux constructeurs).
+
+**API du store** (à consommer en Session 3) :
+`fetchProjectIssueTypes(slug, projectId)` · `getProjectIssueTypes(projectId, activeOnly?)` ·
+`getProjectIssueTypeIds(projectId)` · `getIssueTypeById(id)` · `getProjectDefaultIssueTypeId(projectId)` ·
+`isIssueTypeEnabledForProject(projectId)` · `enableIssueTypes` · `createType` · `updateType` ·
+`deleteType` · `markAsDefault`. CRUD optimiste avec revert sur erreur.
+
+**Vérification** : `pnpm check:types` **28/28** · app démarrée (`pnpm --filter web dev`, :3001) et rendue
+avec succès via Chrome DevTools (écran instance setup) → `new RootStore()` incluant `IssueTypesStore`
+construit sans erreur. Restent des warnings d'hydratation pré-existants (`next-themes`/`LogoSpinner` dans
+`root.tsx`), hors périmètre. Vérif fonctionnelle live (créer un type dans l'UI) → Session 3.
