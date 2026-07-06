@@ -4,7 +4,7 @@
 
 from django.urls import path
 
-from plane.app.views import IssueTypeViewSet, DefaultIssueTypeEndpoint
+from plane.app.views import IssueTypeViewSet, DefaultIssueTypeEndpoint, DefaultEpicTypeEndpoint
 
 
 urlpatterns = [
@@ -29,5 +29,10 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/default-issue-type/",
         DefaultIssueTypeEndpoint.as_view({"post": "create"}),
         name="project-default-issue-type",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/default-epic-type/",
+        DefaultEpicTypeEndpoint.as_view({"post": "create"}),
+        name="project-default-epic-type",
     ),
 ]

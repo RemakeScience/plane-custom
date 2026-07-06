@@ -178,3 +178,50 @@ class DefaultIssueTypeEndpoint(BaseViewSet):
             Issue.objects.filter(project_id=project_id, type__isnull=True).update(type=issue_type)
 
         return Response(IssueTypeSerializer(issue_type).data, status=status.HTTP_201_CREATED)
+
+
+class DefaultEpicTypeEndpoint(BaseViewSet):
+    """Ensures a project has an Epic type (an IssueType with is_epic=True).
+
+    Called when the Epics feature is enabled on a project. Creates a single epic
+    type if the project does not already have one and returns it. Unlike the
+    default work item type, epics do NOT backfill existing work items.
+    """
+
+    serializer_class = IssueTypeSerializer
+    model = IssueType
+
+    @allow_permission([ROLE.ADMIN])
+    def create(self, request, slug, project_id):
+        project = Project.objects.get(pk=project_id, workspace__slug=slug)
+
+        existing_epic = (
+            IssueType.objects.filter(
+                workspace__slug=slug,
+                project_issue_types__project_id=project_id,
+                is_epic=True,
+            )
+            .distinct()
+            .first()
+        )
+        if existing_epic:
+            return Response(IssueTypeSerializer(existing_epic).data, status=status.HTTP_200_OK)
+
+        with transaction.atomic():
+            epic_type = IssueType.objects.create(
+                workspace_id=project.workspace_id,
+                name="Epic",
+                description="Epic",
+                is_epic=True,
+                is_default=True,
+                is_active=True,
+                level=0,
+            )
+            ProjectIssueType.objects.create(
+                issue_type=epic_type,
+                project_id=project_id,
+                level=0,
+                is_default=True,
+            )
+
+        return Response(IssueTypeSerializer(epic_type).data, status=status.HTTP_201_CREATED)

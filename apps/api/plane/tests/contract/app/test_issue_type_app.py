@@ -39,6 +39,9 @@ class TestIssueTypeBase:
     def default_url(self, slug, project_id):
         return f"/api/workspaces/{slug}/projects/{project_id}/default-issue-type/"
 
+    def default_epic_url(self, slug, project_id):
+        return f"/api/workspaces/{slug}/projects/{project_id}/default-epic-type/"
+
     def make_type(self, workspace, project, name="Type", is_epic=False, is_default=False):
         """Create an IssueType + its ProjectIssueType association directly in the DB."""
         issue_type = IssueType.objects.create(workspace=workspace, name=name, is_epic=is_epic, is_default=is_default)
@@ -246,3 +249,42 @@ class TestIssueTypeDefaultAndMarkDefault(TestIssueTypeBase):
         assert second.status_code == status.HTTP_200_OK
         assert second.json()["id"] == first.json()["id"]
         assert IssueType.objects.filter(workspace=workspace, is_default=True, is_epic=False).count() == 1
+
+
+@pytest.mark.contract
+class TestDefaultEpicType(TestIssueTypeBase):
+    @pytest.mark.django_db
+    def test_enable_epics_creates_epic_type(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+
+        response = session_client.post(self.default_epic_url(workspace.slug, project.id))
+
+        assert response.status_code == status.HTTP_201_CREATED
+        epic_type = IssueType.objects.get(id=response.json()["id"])
+        assert epic_type.is_epic is True
+        assert ProjectIssueType.objects.filter(issue_type=epic_type, project=project).exists()
+
+    @pytest.mark.django_db
+    def test_enable_epics_is_idempotent(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+        first = session_client.post(self.default_epic_url(workspace.slug, project.id))
+        assert first.status_code == status.HTTP_201_CREATED
+
+        second = session_client.post(self.default_epic_url(workspace.slug, project.id))
+        assert second.status_code == status.HTTP_200_OK
+        assert second.json()["id"] == first.json()["id"]
+        assert IssueType.objects.filter(workspace=workspace, is_epic=True).count() == 1
+
+    @pytest.mark.django_db
+    def test_epic_type_excluded_from_work_item_types_list(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+        # Enable epics (creates an epic type) then list work item types.
+        session_client.post(self.default_epic_url(workspace.slug, project.id))
+        self.make_type(workspace, project, name="Bug")
+
+        response = session_client.get(self.list_url(workspace.slug, project.id))
+
+        assert response.status_code == status.HTTP_200_OK
+        names = {t["name"] for t in response.json()}
+        # The epic type must not appear in the work item types listing.
+        assert names == {"Bug"}
