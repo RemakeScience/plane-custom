@@ -82,4 +82,13 @@ export class IssueTypeService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  /** Ensures the project has an Epic type (created on Epics feature enable). */
+  async enableEpics(workspaceSlug: string, projectId: string): Promise<TIssueType> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/default-epic-type/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }

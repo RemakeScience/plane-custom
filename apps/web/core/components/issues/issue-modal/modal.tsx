@@ -33,6 +33,12 @@ export interface IssuesModalProps {
   templateId?: string;
   allowedProjectIds?: string[];
   showActionItemsOnUpdate?: boolean;
+  /**
+   * When true, keep the EPIC store type instead of falling back to the project
+   * store. Used by the dedicated epic modal so creation hits the `/epics/` API
+   * (which forces the epic type server-side).
+   */
+  isEpicModal?: boolean;
 }
 
 export const CreateUpdateIssueModal = observer(function CreateUpdateIssueModal(props: IssuesModalProps) {

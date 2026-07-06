@@ -8,10 +8,12 @@ import type { IProjectIssuesFilter } from "@/store/issue/project";
 import { ProjectIssuesFilter } from "@/store/issue/project";
 import type { IIssueRootStore } from "@/store/issue/root.store";
 
-// @ts-nocheck - This class will never be used, extending similar class to avoid type errors
 export type IProjectEpicsFilter = IProjectIssuesFilter;
 
-// @ts-nocheck - This class will never be used, extending similar class to avoid type errors
+/**
+ * Filter store for project epics. Epics reuse the project issue filters (layout,
+ * display filters and properties are persisted per project via ProjectService).
+ */
 export class ProjectEpicsFilter extends ProjectIssuesFilter implements IProjectEpicsFilter {
   constructor(_rootStore: IIssueRootStore) {
     super(_rootStore);

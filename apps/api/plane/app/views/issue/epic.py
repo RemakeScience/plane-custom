@@ -2,14 +2,17 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+# Django imports
+from django.db.models import Count, OuterRef, Subquery
+
 # Third Party imports
 from rest_framework import status
 from rest_framework.response import Response
 
 # Module imports
 from plane.app.permissions import ROLE, allow_permission
-from plane.db.models import Issue, IssueType
-from .base import IssueViewSet
+from plane.db.models import CycleIssue, FileAsset, Issue, IssueLink, IssueType
+from .base import IssuePaginatedViewSet, IssueViewSet
 
 
 class EpicViewSet(IssueViewSet):
@@ -63,3 +66,50 @@ class EpicViewSet(IssueViewSet):
         # Pass slug/project_id as keywords: the inherited create is wrapped by
         # allow_permission, which reads them from kwargs.
         return super().create(request, slug=slug, project_id=project_id)
+
+
+class EpicPaginatedViewSet(IssuePaginatedViewSet):
+    """Paginated (v2) epics list. Same as the issues v2 endpoint but scoped to
+    epics via ``Issue.epic_objects`` (used by the front-end sync fetch).
+
+    The queryset mirrors IssuePaginatedViewSet.get_queryset with the same
+    annotations; only the base manager differs (epic_objects vs issue_objects),
+    because the parent already excludes every epic.
+    """
+
+    def get_queryset(self):
+        workspace_slug = self.kwargs.get("slug")
+        project_id = self.kwargs.get("project_id")
+
+        return (
+            Issue.epic_objects.filter(workspace__slug=workspace_slug, project_id=project_id)
+            .select_related("state")
+            .annotate(cycle_id=Subquery(CycleIssue.objects.filter(issue=OuterRef("id")).values("cycle_id")[:1]))
+            .annotate(
+                link_count=Subquery(
+                    IssueLink.objects.filter(issue=OuterRef("id"))
+                    .values("issue")
+                    .annotate(count=Count("id"))
+                    .values("count")
+                )
+            )
+            .annotate(
+                attachment_count=Subquery(
+                    FileAsset.objects.filter(
+                        issue_id=OuterRef("id"),
+                        entity_type=FileAsset.EntityTypeContext.ISSUE_ATTACHMENT,
+                    )
+                    .values("issue_id")
+                    .annotate(count=Count("id"))
+                    .values("count")
+                )
+            )
+            .annotate(
+                sub_issues_count=Subquery(
+                    Issue.issue_objects.filter(parent=OuterRef("id"))
+                    .values("parent")
+                    .annotate(count=Count("id"))
+                    .values("count")
+                )
+            )
+        )

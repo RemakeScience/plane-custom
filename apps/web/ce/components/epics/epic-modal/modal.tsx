@@ -5,7 +5,11 @@
  */
 
 import React from "react";
+import { observer } from "mobx-react";
+import { EIssuesStoreType } from "@plane/types";
 import type { TIssue } from "@plane/types";
+// components
+import { CreateUpdateIssueModal } from "@/components/issues/issue-modal/modal";
 
 export interface EpicModalProps {
   data?: Partial<TIssue>;
@@ -21,6 +25,25 @@ export interface EpicModalProps {
   isProjectSelectionDisabled?: boolean;
 }
 
-export function CreateUpdateEpicModal(_props: EpicModalProps) {
-  return <></>;
-}
+/**
+ * Create / update modal for epics. Reuses the work item modal but scopes it to
+ * the EPIC store (`isEpicModal`) so submission hits the `/epics/` API, which
+ * forces the project epic type server-side.
+ */
+export const CreateUpdateEpicModal = observer(function CreateUpdateEpicModal(props: EpicModalProps) {
+  return (
+    <CreateUpdateIssueModal
+      data={props.data}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      beforeFormSubmit={props.beforeFormSubmit}
+      onSubmit={props.onSubmit}
+      fetchIssueDetails={props.fetchIssueDetails}
+      primaryButtonText={props.primaryButtonText}
+      isProjectSelectionDisabled={props.isProjectSelectionDisabled}
+      storeType={EIssuesStoreType.EPIC}
+      isEpicModal
+      withDraftIssueWrapper={false}
+    />
+  );
+});

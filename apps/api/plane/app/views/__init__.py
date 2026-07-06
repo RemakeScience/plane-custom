@@ -129,7 +129,7 @@ from .issue.base import (
     IssueDetailIdentifierEndpoint,
 )
 
-from .issue.epic import EpicViewSet
+from .issue.epic import EpicViewSet, EpicPaginatedViewSet
 
 from .issue.activity import IssueActivityEndpoint
 

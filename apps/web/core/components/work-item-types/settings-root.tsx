@@ -33,10 +33,17 @@ export const WorkItemTypesSettingsRoot = observer(function WorkItemTypesSettings
   // store hooks
   const { getProjectById, updateProject } = useProject();
   const { allowPermissions } = useUserPermissions();
-  const { fetchProjectIssueTypes, getProjectIssueTypes, getProjectIssueTypeIds, markAsDefault, enableIssueTypes } =
-    useIssueTypes();
+  const {
+    fetchProjectIssueTypes,
+    getProjectIssueTypes,
+    getProjectIssueTypeIds,
+    markAsDefault,
+    enableIssueTypes,
+    enableEpics,
+  } = useIssueTypes();
   // states
   const [isTogglingFeature, setIsTogglingFeature] = useState(false);
+  const [isTogglingEpics, setIsTogglingEpics] = useState(false);
   const [createUpdateModal, setCreateUpdateModal] = useState<{ isOpen: boolean; data: TIssueType | null }>({
     isOpen: false,
     data: null,
@@ -45,6 +52,7 @@ export const WorkItemTypesSettingsRoot = observer(function WorkItemTypesSettings
   // derived values
   const project = getProjectById(projectId);
   const isEnabled = Boolean(project?.is_issue_type_enabled);
+  const isEpicEnabled = Boolean(project?.is_epic_enabled);
   const isAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
   const issueTypes = getProjectIssueTypes(projectId);
   const hasFetched = getProjectIssueTypeIds(projectId) !== undefined;
@@ -66,6 +74,20 @@ export const WorkItemTypesSettingsRoot = observer(function WorkItemTypesSettings
       setToast({ type: TOAST_TYPE.ERROR, title: "Error!", message: "Could not update the feature. Please try again." });
     } finally {
       setIsTogglingFeature(false);
+    }
+  };
+
+  const handleToggleEpics = async () => {
+    if (!isAdmin || !workspaceSlug || !projectId) return;
+    setIsTogglingEpics(true);
+    try {
+      await updateProject(workspaceSlug, projectId, { is_epic_enabled: !isEpicEnabled });
+      // when enabling, ensure the project's Epic type exists
+      if (!isEpicEnabled) await enableEpics(workspaceSlug, projectId);
+    } catch {
+      setToast({ type: TOAST_TYPE.ERROR, title: "Error!", message: "Could not update Epics. Please try again." });
+    } finally {
+      setIsTogglingEpics(false);
     }
   };
 
@@ -101,6 +123,16 @@ export const WorkItemTypesSettingsRoot = observer(function WorkItemTypesSettings
           </span>
         </div>
         <ToggleSwitch value={isEnabled} onChange={handleToggleFeature} disabled={!isAdmin || isTogglingFeature} />
+      </div>
+
+      <div className="mt-3 flex items-center justify-between rounded-md border border-subtle-1 bg-layer-2 px-4 py-3">
+        <div className="flex flex-col">
+          <span className="text-13 font-medium text-primary">Enable epics</span>
+          <span className="text-13 text-tertiary">
+            Epics are large work items that group related work items across cycles and modules.
+          </span>
+        </div>
+        <ToggleSwitch value={isEpicEnabled} onChange={handleToggleEpics} disabled={!isAdmin || isTogglingEpics} />
       </div>
 
       {isEnabled && (

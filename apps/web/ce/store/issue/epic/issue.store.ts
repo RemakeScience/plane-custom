@@ -4,18 +4,21 @@
  * See the LICENSE file for details.
  */
 
+import { EIssueServiceType } from "@plane/types";
 import type { IProjectIssues } from "@/store/issue/project";
 import { ProjectIssues } from "@/store/issue/project";
 import type { IIssueRootStore } from "@/store/issue/root.store";
 import type { IProjectEpicsFilter } from "./filter.store";
 
-// @ts-nocheck - This class will never be used, extending similar class to avoid type errors
-
 export type IProjectEpics = IProjectIssues;
 
-// @ts-nocheck - This class will never be used, extending similar class to avoid type errors
+/**
+ * Project epics store. Epics are work items whose type has `is_epic=True`; they
+ * reuse the whole project issues machinery but route every request to the
+ * `/epics/` API surface by passing the EPICS service type down to the base store.
+ */
 export class ProjectEpics extends ProjectIssues implements IProjectEpics {
   constructor(_rootStore: IIssueRootStore, issueFilterStore: IProjectEpicsFilter) {
-    super(_rootStore, issueFilterStore);
+    super(_rootStore, issueFilterStore, EIssueServiceType.EPICS);
   }
 }

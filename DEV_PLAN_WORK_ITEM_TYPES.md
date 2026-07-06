@@ -201,8 +201,9 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       `resetOnSignOut`) + typé dans l'interface, via `@/plane-web/store/issue-types.store`.
 - [x] Hook `apps/web/core/hooks/store/use-issue-types.ts` (`useIssueTypes()`).
 - [ ] `issue-property.store.ts` + `issue-property-value.store.ts` (Session 7).
-- [ ] **Activer le store épic** — remplacer les stubs `apps/web/ce/store/issue/epic/{issue,filter}.store.ts`
-      (retirer `// will never be used`) par une vraie implémentation reliée au filtre `is_epic=True` (Session 5).
+- [x] **Activer le store épic** (Session 5) — stubs `apps/web/ce/store/issue/epic/{issue,filter}.store.ts`
+      remplacés : `ProjectEpics` passe `EIssueServiceType.EPICS` (via un param `serviceType` optionnel ajouté
+      à `ProjectIssues`) ⇒ requêtes sur `/epics/`. Voir §18.
 
 ---
 
@@ -237,11 +238,11 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
 
 ### Epics
 
-- [ ] `epics/epic-modal/modal.tsx` — vraie `CreateUpdateEpicModal` (aujourd'hui `<></>`).
-- [ ] Page Epics — créer la route `/epics` (assets d'empty-state déjà présents dans
-      `apps/web/app/assets/empty-state/epics`). Réutiliser les layouts d'issue avec le store épic.
-- [ ] Nav — activer l'entrée « epics » (`project-navigation.tsx` + `tab-navigation-utils.ts:76`) sous
-      condition `is_epic_enabled`.
+- [x] `epics/epic-modal/modal.tsx` — `CreateUpdateEpicModal` réelle (réutilise `CreateUpdateIssueModal`
+      `storeType=EPIC` + `isEpicModal`). Session 5, §18.
+- [x] Page Epics — route `/epics` + `EpicLayoutRoot` (`IssuesStoreContext=EPIC`). Session 5, §18.
+- [x] Nav — entrée « epics » injectée via `additionalNavigationItems` (CE `project-navigation-root.tsx`),
+      gated `is_epic_enabled`. Session 5, §18.
 
 ### Réglages (settings projet)
 
@@ -303,8 +304,11 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       (routes `epics/`), exclusion des épics des listes via `IssueManager` (+ manager `epic_objects`), parentage
       vérifié. 11 tests épics verts (28/28 avec les types ; non-régression contract/app OK — seuls les 8
       échecs rate-limit magic-link pré-existants restent). Détail §17.
-- [ ] **Session 5 — Store + UI Epics.** Store épic réel, page `/epics`, nav, modale. Livrable : épics
-      utilisables.
+- [x] **Session 5 — Store + UI Epics.** ✅ Stores CE réels (`ProjectEpics`/`ProjectEpicsFilter` passent
+      `EIssueServiceType.EPICS`), miroir d'URLs backend `epics/` (+ sous-ressources + `v2/epics/`), page
+      `/epics` (route + layout root + header + modale), nav gated `is_epic_enabled`, toggle settings. Fixé un
+      500 latent (`activity.py`) et câblé la création via `/epics/`. **Vérifié live end-to-end** (toggle →
+      nav → page → créer épic → détail/activité → exclusion des listes). Détail §18.
 - [ ] **Session 6 — Backend Propriétés (B3).** Modèles + migrations + serializers + endpoints + valeurs.
       Livrable : API propriétés.
 - [ ] **Session 7 — Data layer + stores Propriétés.** Types, services, stores propriétés/valeurs.
@@ -554,3 +558,59 @@ non-régression `contract/app` : 99 passés, seuls les 8 échecs rate-limit magi
 
 **Reste (Session 5)** : store épic réel (remplacer les stubs `ce/store/issue/epic/*`), page `/epics`, nav
 (gate `is_epic_enabled`), modale de création.
+
+---
+
+## 18. Session 5 — Store + UI Epics (livré)
+
+**Découverte clé** : l'essentiel de l'infra épic était déjà câblée dans `core/` (slots `projectEpics`/
+`projectEpicsFilter`/`epicDetail` dans `root.store`, `useIssues(EPIC)`, `useIssuesActions(EPIC)`,
+`HeaderFilters storeType=EPIC`, service `IssueService(EPICS)` → path `/epics/`). Les stubs CE ne
+passaient simplement pas le service type.
+
+**Stores (CE, stubs remplacés)** :
+
+- `apps/web/ce/store/issue/epic/issue.store.ts` — `ProjectEpics` passe `EIssueServiceType.EPICS` à
+  `ProjectIssues` ⇒ toutes les requêtes vont sur `/epics/`.
+- `apps/web/ce/store/issue/epic/filter.store.ts` — `ProjectEpicsFilter` (nettoyage « will never be used »).
+- `apps/web/core/store/issue/project/issue.store.ts` — `ProjectIssues` accepte un 3ᵉ param `serviceType`
+  optionnel (défaut `ISSUES`, rétrocompatible) transmis à `BaseIssuesStore`.
+
+**Backend — miroir d'URLs `epics/`** (`apps/api/plane/app/urls/issue.py`) : la plupart des sous-ressources
+sont clés par pk ⇒ réutilisent les viewsets issue existants (history, comments, reactions, subscribe,
+issue-relation, archive, meta, links `epics/<id>/links/`, sub-issues `epics/<id>/issues/`, attachments v2).
+Nouveau `EpicPaginatedViewSet` (`v2/epics/`, scopé `epic_objects`) pour le fetch de sync.
+
+- 🐛 **Bug latent corrigé** (`apps/api/plane/app/views/issue/activity.py`) : le fall-through de
+  `IssueActivityEndpoint` triait des **instances de modèle** par `instance["created_at"]` ⇒ 500 « not
+  subscriptable ». Jamais atteint par les issues (qui passent toujours `activity_type=issue-*`), mais
+  atteint par les épics (`getIssueActivities` appelle `/history/` **sans** param). Fix : accepter les
+  variantes `epic-property`/`epic-comment` **et** sérialiser avant de trier (corrige aussi le cas issue nu).
+
+**Frontend — page & UI** :
+
+- Route `/epics` enregistrée (`apps/web/app/routes/core.ts`) + fichiers
+  `.../[projectId]/epics/(list)/{page,layout,header,mobile-header}.tsx`.
+- `apps/web/core/components/epics/layout-root.tsx` — `EpicLayoutRoot` (miroir de `ProjectLayoutRoot` sous
+  `IssuesStoreContext.Provider value={EPIC}` ⇒ tous les layouts enfants lisent le store épic).
+- `apps/web/ce/components/epics/epic-modal/modal.tsx` — `CreateUpdateEpicModal` réelle : réutilise
+  `CreateUpdateIssueModal` avec `storeType=EPIC` + `isEpicModal`. Nouveau flag `isEpicModal` dans
+  `IssuesModalProps` : le modal base ne rabat plus EPIC→PROJECT quand il est set ⇒ création via `/epics/`
+  (le backend force le type épic). `withDraftIssueWrapper={false}`.
+- `apps/web/ce/components/sidebar/project-navigation-root.tsx` — injecte l'onglet « Epics »
+  (`additionalNavigationItems`, `sortOrder 1.5`, `LayersIcon`), gated `project.is_epic_enabled`.
+- `apps/web/core/components/work-item-types/settings-root.tsx` — toggle « Enable epics » (met
+  `is_epic_enabled` + appelle `default-epic-type/` via `enableEpics`). Service `enableEpics` +
+  store `enableEpics` ajoutés. `ISSUE_STORE_TO_FILTERS_MAP[EPIC]` = config issues.
+
+**Vérification** : `pnpm check:types` **28/28** · Django `check` OK · `makemigrations --check` clean ·
+tests `test_epic_app.py` **11/11**, `test_issue_type_app.py` 17/17, contract/app 99 passés (8 rate-limit
+pré-existants) · **live (Chrome DevTools, :3001)** : toggle épics ON (`is_epic_enabled=true` persisté) →
+onglet nav « Epics » visible → page `/epics` rendue → « Add Epic » → modale → épic **WIT-3** créé via
+`/epics/` (type épic forcé) → visible dans la liste épics, **absent** des work items → détail/peek complet
+(propriétés, sous-work-items, relations, liens, commentaires, **Activity**). Aucune erreur console
+imputable à la feature (restent les warnings hydration/refs pré-existants).
+
+**⏳ Reste (follow-up)** : endpoint `epics-detail/` (seulement layout GANTT/spreadsheet avec
+`expand=issue_relation`, 404 non fatal) ; filtres rich-filter par type (déjà noté §16) ; épic detail comme
+**page** dédiée (aujourd'hui via peek/detail générique).

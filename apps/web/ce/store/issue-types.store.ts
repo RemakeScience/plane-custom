@@ -29,6 +29,7 @@ export interface IIssueTypesStore {
   fetchProjectIssueTypes: (workspaceSlug: string, projectId: string) => Promise<TIssueType[]>;
   // crud actions
   enableIssueTypes: (workspaceSlug: string, projectId: string) => Promise<TIssueType>;
+  enableEpics: (workspaceSlug: string, projectId: string) => Promise<TIssueType>;
   createType: (workspaceSlug: string, projectId: string, data: Partial<TIssueType>) => Promise<TIssueType>;
   updateType: (
     workspaceSlug: string,
@@ -60,6 +61,7 @@ export class IssueTypesStore implements IIssueTypesStore {
       fetchProjectIssueTypes: action,
       // crud actions
       enableIssueTypes: action,
+      enableEpics: action,
       createType: action,
       updateType: action,
       deleteType: action,
@@ -151,6 +153,14 @@ export class IssueTypesStore implements IIssueTypesStore {
     });
     return response;
   };
+
+  /**
+   * @description enables epics on a project (creates the Epic type). The epic
+   * type is intentionally not added to the project issue type maps, since those
+   * back the work item types UI which excludes epics.
+   */
+  enableEpics = async (workspaceSlug: string, projectId: string) =>
+    this.issueTypeService.enableEpics(workspaceSlug, projectId);
 
   /**
    * @description creates a new issue type in a project
