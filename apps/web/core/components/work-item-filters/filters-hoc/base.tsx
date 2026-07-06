@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { v4 as uuidv4 } from "uuid";
 // plane imports
@@ -43,7 +43,7 @@ export const WorkItemFiltersHOC = observer(function WorkItemFiltersHOC(props: TW
 type TWorkItemFilterProps = TSharedWorkItemFiltersProps &
   TAdditionalWorkItemFiltersProps & {
     initialWorkItemFilters: IIssueFilters;
-    children: React.ReactNode | ((props: { filter: IWorkItemFilterInstance }) => React.ReactNode);
+    children: React.ReactNode | ((props: { filter: IWorkItemFilterInstance | undefined }) => React.ReactNode);
   };
 
 const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItemFilterProps) {
@@ -73,10 +73,16 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
     allowedFilters: filtersToShowByLayout ? filtersToShowByLayout : [],
     ...entityConfigProps,
   });
-  // get or create filter instance
-  const workItemLayoutFilter = useMemo(
-    () =>
-      getOrCreateFilter({
+  // Get or create the filter instance inside an effect (commit phase) so that
+  // registration and the unmount deletion are symmetric. Doing this in render
+  // (useMemo) desynced with the commit-phase cleanup under StrictMode's
+  // mount → cleanup → remount, which deleted the shared instance and left the
+  // (separately-mounted) header filter toggle without one.
+  const [workItemLayoutFilter, setWorkItemLayoutFilter] = useState<IWorkItemFilterInstance | undefined>(undefined);
+
+  useEffect(
+    () => {
+      const filterInstance = getOrCreateFilter({
         entityType,
         entityId: workItemEntityID,
         initialExpression: initialUserFilters,
@@ -86,27 +92,21 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
           updateViewOptions,
         },
         showOnMount,
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entityType, workItemEntityID, saveViewOptions, updateViewOptions, updateFilters]
-  );
-
-  // delete filter instance when component unmounts
-  useEffect(
-    () => () => {
-      deleteFilter(entityType, workItemEntityID);
+      });
+      setWorkItemLayoutFilter(filterInstance);
+      return () => {
+        deleteFilter(entityType, workItemEntityID);
+      };
     },
-    [deleteFilter, entityType, workItemEntityID]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [entityType, workItemEntityID, saveViewOptions, updateViewOptions, updateFilters, deleteFilter]
   );
 
   useEffect(() => {
+    if (!workItemLayoutFilter) return;
     workItemLayoutFilter.configManager.setAreConfigsReady(workItemFiltersConfig.areAllConfigsInitialized);
     workItemLayoutFilter.configManager.registerAll(workItemFiltersConfig.configs);
-  }, [
-    workItemFiltersConfig.areAllConfigsInitialized,
-    workItemFiltersConfig.configs,
-    workItemLayoutFilter.configManager,
-  ]);
+  }, [workItemFiltersConfig.areAllConfigsInitialized, workItemFiltersConfig.configs, workItemLayoutFilter]);
 
   return <>{typeof children === "function" ? children({ filter: workItemLayoutFilter }) : children}</>;
 });
