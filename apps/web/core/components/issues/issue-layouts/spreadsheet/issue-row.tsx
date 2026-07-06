@@ -400,7 +400,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
         />
       ))}
       {/* Custom property columns (project-level work item types) */}
-      <SpreadsheetCustomPropertyValueCells issueId={issueDetail.id} />
+      <SpreadsheetCustomPropertyValueCells issueId={issueDetail.id} disabled={disableUserActions} />
     </>
   );
 });

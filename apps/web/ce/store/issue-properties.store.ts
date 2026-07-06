@@ -8,9 +8,10 @@ import { set } from "lodash-es";
 import { action, makeObservable, observable, runInAction } from "mobx";
 import { computedFn } from "mobx-utils";
 // plane imports
-import type { TIssueProperty, TIssuePropertyOption } from "@plane/types";
+import type { TIssueProperty, TIssuePropertyOption, TIssuePropertyValues } from "@plane/types";
 // services
 import { IssuePropertyService } from "@/services/issue-property.service";
+import { IssuePropertyValueService } from "@/services/issue-property-value.service";
 // store
 import type { RootStore } from "@/plane-web/store/root.store";
 
@@ -21,8 +22,10 @@ export interface IIssuePropertiesStore {
   projectPropertyIdsMap: Record<string, string[]>;
   propertyOptionIdsMap: Record<string, string[]>;
   fetchedMap: Record<string, boolean>;
+  valuesByIssue: Record<string, TIssuePropertyValues>;
   // getters
   getPropertyById: (propertyId: string | null | undefined) => TIssueProperty | undefined;
+  getIssueValues: (issueId: string | null | undefined) => TIssuePropertyValues | undefined;
   getProjectPropertyIds: (projectId: string | null | undefined) => string[] | undefined;
   getTypeProperties: (
     projectId: string | null | undefined,
@@ -32,6 +35,8 @@ export interface IIssuePropertiesStore {
   getPropertyOptions: (propertyId: string | null | undefined) => TIssuePropertyOption[];
   // fetch
   fetchProjectProperties: (workspaceSlug: string, projectId: string) => Promise<void>;
+  fetchBulkValues: (workspaceSlug: string, projectId: string, issueIds: string[]) => Promise<void>;
+  setIssueValues: (issueId: string, values: TIssuePropertyValues) => void;
   // property crud
   createProperty: (
     workspaceSlug: string,
@@ -71,10 +76,12 @@ export class IssuePropertiesStore implements IIssuePropertiesStore {
   projectPropertyIdsMap: Record<string, string[]> = {};
   propertyOptionIdsMap: Record<string, string[]> = {};
   fetchedMap: Record<string, boolean> = {};
+  valuesByIssue: Record<string, TIssuePropertyValues> = {};
   // root store
   rootStore: RootStore;
-  // service
+  // services
   issuePropertyService: IssuePropertyService;
+  issuePropertyValueService: IssuePropertyValueService;
 
   constructor(_rootStore: RootStore) {
     makeObservable(this, {
@@ -83,7 +90,10 @@ export class IssuePropertiesStore implements IIssuePropertiesStore {
       projectPropertyIdsMap: observable,
       propertyOptionIdsMap: observable,
       fetchedMap: observable,
+      valuesByIssue: observable,
       fetchProjectProperties: action,
+      fetchBulkValues: action,
+      setIssueValues: action,
       createProperty: action,
       updateProperty: action,
       deleteProperty: action,
@@ -93,10 +103,15 @@ export class IssuePropertiesStore implements IIssuePropertiesStore {
     });
     this.rootStore = _rootStore;
     this.issuePropertyService = new IssuePropertyService();
+    this.issuePropertyValueService = new IssuePropertyValueService();
   }
 
   getPropertyById = computedFn((propertyId: string | null | undefined) =>
     propertyId ? this.propertyMap[propertyId] : undefined
+  );
+
+  getIssueValues = computedFn((issueId: string | null | undefined) =>
+    issueId ? this.valuesByIssue[issueId] : undefined
   );
 
   getProjectPropertyIds = computedFn((projectId: string | null | undefined) => {
@@ -142,6 +157,21 @@ export class IssuePropertiesStore implements IIssuePropertiesStore {
       set(this.projectPropertyIdsMap, [projectId], propertyIds);
       set(this.fetchedMap, [projectId], true);
     });
+  };
+
+  fetchBulkValues = async (workspaceSlug: string, projectId: string, issueIds: string[]) => {
+    if (issueIds.length === 0) return;
+    const response = await this.issuePropertyValueService.fetchBulk(workspaceSlug, projectId, issueIds);
+    runInAction(() => {
+      // Seed every requested issue (so those without values resolve to {} and
+      // don't refetch), then overlay whatever the server returned.
+      issueIds.forEach((issueId) => set(this.valuesByIssue, [issueId], this.valuesByIssue[issueId] ?? {}));
+      Object.entries(response ?? {}).forEach(([issueId, values]) => set(this.valuesByIssue, [issueId], values));
+    });
+  };
+
+  setIssueValues = (issueId: string, values: TIssuePropertyValues) => {
+    runInAction(() => set(this.valuesByIssue, [issueId], values));
   };
 
   createProperty = async (workspaceSlug: string, projectId: string, typeId: string, data: Partial<TIssueProperty>) => {

@@ -120,6 +120,7 @@ export const SpreadsheetTable = observer(function SpreadsheetTable(props: Props)
         isEstimateEnabled={isEstimateEnabled}
         spreadsheetColumnsList={spreadsheetColumnsList}
         selectionHelpers={selectionHelpers}
+        issueIds={issueIds}
         isEpic={isEpic}
       />
       <tbody>

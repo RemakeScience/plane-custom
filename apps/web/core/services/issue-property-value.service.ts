@@ -27,6 +27,25 @@ export class IssuePropertyValueService extends APIService {
   }
 
   /**
+   * Read custom property values for many work items in a single request.
+   * Returns `{ issueId: { propertyId: values[] } }`. Backs the spreadsheet
+   * columns without an N+1 per-row fetch.
+   */
+  async fetchBulk(
+    workspaceSlug: string,
+    projectId: string,
+    issueIds: string[]
+  ): Promise<Record<string, TIssuePropertyValues>> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/property-values/`, {
+      issue_ids: issueIds,
+    })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
    * Bulk upsert: `values` maps property id → list of values. Only the
    * properties present in the payload are replaced; the response is the full,
    * refreshed value map for the issue.

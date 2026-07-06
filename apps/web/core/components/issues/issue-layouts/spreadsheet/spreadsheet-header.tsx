@@ -26,6 +26,7 @@ interface Props {
   isEstimateEnabled: boolean;
   spreadsheetColumnsList: (keyof IIssueDisplayProperties)[];
   selectionHelpers: TSelectionHelper;
+  issueIds?: string[];
   isEpic?: boolean;
 }
 
@@ -38,6 +39,7 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
     isEstimateEnabled,
     spreadsheetColumnsList,
     selectionHelpers,
+    issueIds,
     isEpic = false,
   } = props;
   // router
@@ -88,7 +90,7 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
             isEpic={isEpic}
           />
         ))}
-        <SpreadsheetCustomPropertyHeaders />
+        <SpreadsheetCustomPropertyHeaders issueIds={issueIds} />
       </tr>
     </thead>
   );
