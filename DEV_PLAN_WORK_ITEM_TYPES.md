@@ -808,6 +808,26 @@ relation-field, spreadsheet) + réutilisation `common.error`/`common.cancel`. Tr
 django check OK, contract/app 115 passés, `epics-detail/` résout. **Work Item Types + Epics + Custom Properties =
 complets et polis.**
 
+**E. Filtre par type dans la vue principale (rich-filters)** — chantier §16 « reste » repris :
+
+- Backend : filtre `issue_type`/`issue_type__in` ajouté à `IssueFilterSet` (`utils/filters/filterset.py`, mappé sur
+  `Issue.type` → `type_id`). `ComplexFilterBackend._validate_fields` n'accepte que les clés déclarées → sans cet
+  ajout la condition `issue_type__in` renverrait un 400. `IssueViewSet.list` passe déjà par ce backend. Test unitaire
+  `TestIssueTypeFilter` (17 tests props verts).
+- Frontend rich-filters : clé `issue_type` ajoutée à `WORK_ITEM_FILTER_PROPERTY_KEYS` (`types/view-props.ts`) ;
+  config `getWorkItemTypeFilterConfig` (`utils/.../filters/work-item-type.ts`, miroir de `state.ts`, options =
+  `TIssueType`, valeur = id) + export barrel ; enregistrée dans `use-work-item-filters-config.tsx` (memo
+  `workItemTypes`, config gatée `is_issue_type_enabled && workItemTypes !== undefined`, ajout à `configs`/`configMap`,
+  icône `Layers` + `Logo` par option) ; `issue_type` ajouté à l'allow-list `ISSUE_DISPLAY_FILTERS_BY_PAGE.issues` ;
+  `issueTypeIds` injecté par `project-level.tsx` (+ **fetch des types au montage** pour que le filtre soit dispo, à
+  l'image du filtre legacy). Pas de mapping API à écrire : le rich-filter sérialise `issue_type__in` dans le blob JSON
+  `filters` que le backend lit directement.
+- **Vérifié E2E via API** (contexte navigateur authentifié) : `?filters={"issue_type__in":[TaskId]}` → 3 résultats,
+  `[BugId]` → 0 (les 3 issues WIT sont de type Task) ; statut 200 (condition acceptée par le filterset). `check:types`
+  28/28, lint 0 erreur. ⚠️ **UI non pilotée en live** : le serveur `react-router dev` lancé seul (hors `pnpm dev`) est
+  en état d'hydratation dégradé (« filter instance not available » sur toute la barre de filtres, filtre State compris)
+  → dropdown non ouvrable dans cet environnement. À revérifier via `pnpm dev` normal.
+
 **⏳ Reste éventuel (post-S9)** : upload binaire réel pour FILE ; édition inline des propriétés custom dans le
 spreadsheet (aujourd'hui lecture seule) ; batch endpoint de valeurs pour éviter le N+1 sur les lignes visibles ;
-colonnes custom en vue workspace (multi-projet).
+colonnes custom en vue workspace (multi-projet) ; re-vérif live du filtre par type via `pnpm dev`.
