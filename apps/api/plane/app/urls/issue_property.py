@@ -9,6 +9,7 @@ from plane.app.views import (
     IssuePropertyOptionViewSet,
     IssuePropertyAndOptionEndpoint,
     IssuePropertyValueEndpoint,
+    IssuePropertyValuesBulkEndpoint,
 )
 
 
@@ -50,5 +51,11 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/property-values/",
         IssuePropertyValueEndpoint.as_view(),
         name="project-issue-property-values",
+    ),
+    # Custom property values for many issues at once (spreadsheet columns).
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/property-values/",
+        IssuePropertyValuesBulkEndpoint.as_view(),
+        name="project-issue-property-values-bulk",
     ),
 ]

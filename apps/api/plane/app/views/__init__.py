@@ -90,6 +90,7 @@ from .issue_property.base import (
     IssuePropertyOptionViewSet,
     IssuePropertyAndOptionEndpoint,
     IssuePropertyValueEndpoint,
+    IssuePropertyValuesBulkEndpoint,
 )
 from .view.base import (
     WorkspaceViewViewSet,

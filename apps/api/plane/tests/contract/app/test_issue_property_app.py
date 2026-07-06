@@ -75,6 +75,9 @@ class TestIssuePropertyBase:
     def issues_url(self, slug, project_id):
         return f"/api/workspaces/{slug}/projects/{project_id}/issues/"
 
+    def bulk_values_url(self, slug, project_id):
+        return f"/api/workspaces/{slug}/projects/{project_id}/property-values/"
+
 
 @pytest.mark.contract
 class TestIssuePropertyCRUD(TestIssuePropertyBase):
@@ -280,6 +283,36 @@ class TestIssuePropertyValues(TestIssuePropertyBase):
         assert second.status_code == status.HTTP_200_OK
         assert second.json()[str(prop.id)] == ["second"]
         assert IssuePropertyValue.objects.filter(issue=issue, property=prop).count() == 1
+
+    @pytest.mark.django_db
+    def test_bulk_read_values_for_many_issues(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+        issue_type = self.make_type(workspace, project)
+        prop = self.make_property(workspace, project, issue_type, property_type="TEXT")
+        issue_a = self.make_issue(workspace, project, name="A")
+        issue_b = self.make_issue(workspace, project, name="B")
+
+        session_client.post(self.values_url(workspace.slug, project.id, issue_a.id), {str(prop.id): ["high"]}, format="json")
+        session_client.post(self.values_url(workspace.slug, project.id, issue_b.id), {str(prop.id): ["low"]}, format="json")
+
+        response = session_client.post(
+            self.bulk_values_url(workspace.slug, project.id),
+            {"issue_ids": [str(issue_a.id), str(issue_b.id)]},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+        assert payload[str(issue_a.id)][str(prop.id)] == ["high"]
+        assert payload[str(issue_b.id)][str(prop.id)] == ["low"]
+
+    @pytest.mark.django_db
+    def test_bulk_read_empty_issue_ids(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+        response = session_client.post(
+            self.bulk_values_url(workspace.slug, project.id), {"issue_ids": []}, format="json"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {}
 
 
 @pytest.mark.contract

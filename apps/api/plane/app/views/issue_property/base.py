@@ -348,3 +348,28 @@ class IssuePropertyValueEndpoint(BaseAPIView):
 
         persist_property_values(issue_id, to_write)
         return Response(self._serialize_values(slug, project_id, issue_id), status=status.HTTP_200_OK)
+
+
+class IssuePropertyValuesBulkEndpoint(BaseAPIView):
+    """Read custom property values for many issues in a single request.
+
+    POST ``{"issue_ids": [...]}`` -> ``{issue_id: {property_id: [values...]}}``.
+    Backs the spreadsheet columns without an N+1 per-row fetch.
+    """
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def post(self, request, slug, project_id):
+        issue_ids = request.data.get("issue_ids") or []
+        if not isinstance(issue_ids, list):
+            return Response({"error": "'issue_ids' must be a list."}, status=status.HTTP_400_BAD_REQUEST)
+        if not issue_ids:
+            return Response({}, status=status.HTTP_200_OK)
+
+        values = IssuePropertyValue.objects.filter(
+            workspace__slug=slug, project_id=project_id, issue_id__in=issue_ids
+        ).select_related("property")
+        result = {}
+        for value in values:
+            issue_bucket = result.setdefault(str(value.issue_id), {})
+            issue_bucket.setdefault(str(value.property_id), []).append(read_typed_value(value))
+        return Response(result, status=status.HTTP_200_OK)
