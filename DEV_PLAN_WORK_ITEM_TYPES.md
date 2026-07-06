@@ -289,8 +289,12 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       badge `IssueTypeIdentifier`, `getIssueTypeIdOnProjectChange` (défaut pré-sélectionné) — §15. Vérifiés
       live end-to-end. ✅ **P3 (optionnelles)** : switcher de type interactif dans le détail, toggle
       display-property `issue_type`, filtres par type (backend + composants) — §16.
-- [ ] **Session 4 — Backend Epics (B2).** Champ `is_epic_enabled`, endpoints filtrés, audit du filtrage
-      des listes. Livrable : API épics + non-régression.
+- [~] **Session 4 — Backend Epics (B2).** ✅ **Foundation** : champ `Project.is_epic_enabled` (+ migration
+  0122, exposé via serializer app + type TS), `DefaultEpicTypeEndpoint` (crée le type Epic `is_epic=True`
+  à l'activation, idempotent) — route `/default-epic-type/`. 3 tests verts (17/17 au total). Le type Epic
+  n'est pas sélectionnable dans la création d'issue normale (`IssueTypeSelect` filtre `is_epic=False`).
+  ⏳ **Reste** : endpoints de liste/détail des épics (`type__is_epic=True`), **audit d'exclusion des épics
+  des listes d'issues normales** (point sensible), relations épic→work items.
 - [ ] **Session 5 — Store + UI Epics.** Store épic réel, page `/epics`, nav, modale. Livrable : épics
       utilisables.
 - [ ] **Session 6 — Backend Propriétés (B3).** Modèles + migrations + serializers + endpoints + valeurs.
