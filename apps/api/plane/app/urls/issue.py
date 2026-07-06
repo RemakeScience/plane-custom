@@ -149,6 +149,11 @@ urlpatterns = [
         name="project-epics-paginated",
     ),
     path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/epics-detail/",
+        IssueDetailEndpoint.as_view(),
+        name="project-epic-detail",
+    ),
+    path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/",
         IssueViewSet.as_view({"get": "list", "post": "create"}),
         name="project-issue",

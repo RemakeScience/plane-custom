@@ -76,6 +76,99 @@ def read_typed_value(value_obj):
     return None
 
 
+def default_values_payload(type_id):
+    """Build a ``{property_id: [values]}`` payload from the declared defaults of
+    every active property of ``type_id``.
+
+    OPTION properties draw their defaults from options flagged ``is_default``;
+    every other type uses the property's ``default_value`` list.
+    """
+    payload = {}
+    for issue_property in IssueProperty.objects.filter(issue_type_id=type_id, is_active=True):
+        if issue_property.property_type == PropertyTypeEnum.OPTION:
+            values = [
+                str(option_id)
+                for option_id in IssuePropertyOption.objects.filter(
+                    property_id=issue_property.id, is_default=True, is_active=True
+                ).values_list("id", flat=True)
+            ]
+        else:
+            default = issue_property.default_value or []
+            values = default if isinstance(default, list) else [default]
+        values = [v for v in values if v is not None and v != ""]
+        if values:
+            payload[str(issue_property.id)] = values
+    return payload
+
+
+def build_property_values(project, issue_id, payload, enforce_required=True):
+    """Validate ``payload`` (``{property_id: values}``) and build unsaved
+    ``IssuePropertyValue`` rows grouped by property.
+
+    Returns ``(to_write, error)``; ``error`` is a message string on the first
+    validation failure (and ``to_write`` is ``None``), otherwise ``None``.
+    """
+    properties = {
+        str(p.id): p
+        for p in IssueProperty.objects.filter(project_id=project.id, id__in=list(payload.keys()))
+    }
+    to_write = {}  # property_id -> list[IssuePropertyValue]
+    for property_id, raw_values in payload.items():
+        issue_property = properties.get(str(property_id))
+        if issue_property is None:
+            return None, f"Unknown property {property_id}."
+        value_list = raw_values if isinstance(raw_values, list) else [raw_values]
+        value_list = [v for v in value_list if v is not None and v != ""]
+        if enforce_required and issue_property.is_required and len(value_list) == 0:
+            return None, f"'{issue_property.display_name}' is required."
+        if not issue_property.is_multi and len(value_list) > 1:
+            return None, f"'{issue_property.display_name}' does not accept multiple values."
+        built = []
+        for raw in value_list:
+            value_obj = IssuePropertyValue(
+                project_id=project.id,
+                workspace_id=project.workspace_id,
+                issue_id=issue_id,
+                property_id=property_id,
+            )
+            try:
+                assign_typed_value(value_obj, issue_property, raw)
+            except ValueError as e:
+                return None, str(e)
+            built.append(value_obj)
+        to_write[str(property_id)] = built
+    return to_write, None
+
+
+def persist_property_values(issue_id, to_write):
+    """Hard-replace the stored values for each property in ``to_write``."""
+    with transaction.atomic():
+        for property_id, new_values in to_write.items():
+            IssuePropertyValue.objects.filter(issue_id=issue_id, property_id=property_id).delete(soft=False)
+            IssuePropertyValue.objects.bulk_create(new_values, batch_size=50)
+
+
+def write_property_values_for_issue(
+    project, issue, inline_payload=None, apply_defaults=False, enforce_required=True
+):
+    """Persist property values for ``issue`` from an optional inline payload,
+    optionally backfilling each property's declared default first (inline values
+    override defaults). Returns an error message string, or ``None`` on success.
+    """
+    payload = {}
+    if apply_defaults and issue.type_id:
+        payload.update(default_values_payload(issue.type_id))
+    if isinstance(inline_payload, dict):
+        payload.update(inline_payload)
+    if not payload:
+        return None
+    to_write, error = build_property_values(project, issue.id, payload, enforce_required=enforce_required)
+    if error:
+        return error
+    persist_property_values(issue.id, to_write)
+    return None
+
+
 class IssuePropertyViewSet(BaseViewSet):
     """CRUD of custom property definitions scoped to an issue type."""
 
@@ -247,52 +340,11 @@ class IssuePropertyValueEndpoint(BaseAPIView):
         if not isinstance(payload, dict):
             return Response({"error": "Expected an object of property values."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Resolve the properties referenced in the payload (scoped to the project).
-        properties = {
-            str(p.id): p
-            for p in IssueProperty.objects.filter(project_id=project_id, id__in=list(payload.keys()))
-        }
-
         # Fully validate and build every value object BEFORE touching the DB, so a
         # bad value never leaves partially-written state behind.
-        to_write = {}  # property_id -> list[IssuePropertyValue]
-        for property_id, raw_values in payload.items():
-            issue_property = properties.get(str(property_id))
-            if issue_property is None:
-                return Response(
-                    {"error": f"Unknown property {property_id}."}, status=status.HTTP_400_BAD_REQUEST
-                )
-            value_list = raw_values if isinstance(raw_values, list) else [raw_values]
-            value_list = [v for v in value_list if v is not None and v != ""]
-            if issue_property.is_required and len(value_list) == 0:
-                return Response(
-                    {"error": f"'{issue_property.display_name}' is required."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            if not issue_property.is_multi and len(value_list) > 1:
-                return Response(
-                    {"error": f"'{issue_property.display_name}' does not accept multiple values."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            built = []
-            for raw in value_list:
-                value_obj = IssuePropertyValue(
-                    project_id=project_id,
-                    workspace_id=project.workspace_id,
-                    issue_id=issue_id,
-                    property_id=property_id,
-                )
-                try:
-                    assign_typed_value(value_obj, issue_property, raw)
-                except ValueError as e:
-                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-                built.append(value_obj)
-            to_write[str(property_id)] = built
+        to_write, error = build_property_values(project, issue_id, payload, enforce_required=True)
+        if error:
+            return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
 
-        with transaction.atomic():
-            for property_id, new_values in to_write.items():
-                # Hard-replace existing values for this property.
-                IssuePropertyValue.objects.filter(issue_id=issue_id, property_id=property_id).delete(soft=False)
-                IssuePropertyValue.objects.bulk_create(new_values, batch_size=50)
-
+        persist_property_values(issue_id, to_write)
         return Response(self._serialize_values(slug, project_id, issue_id), status=status.HTTP_200_OK)

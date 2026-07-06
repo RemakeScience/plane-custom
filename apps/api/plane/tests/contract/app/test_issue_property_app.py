@@ -72,6 +72,9 @@ class TestIssuePropertyBase:
     def values_url(self, slug, project_id, issue_id):
         return f"/api/workspaces/{slug}/projects/{project_id}/issues/{issue_id}/property-values/"
 
+    def issues_url(self, slug, project_id):
+        return f"/api/workspaces/{slug}/projects/{project_id}/issues/"
+
 
 @pytest.mark.contract
 class TestIssuePropertyCRUD(TestIssuePropertyBase):
@@ -277,3 +280,90 @@ class TestIssuePropertyValues(TestIssuePropertyBase):
         assert second.status_code == status.HTTP_200_OK
         assert second.json()[str(prop.id)] == ["second"]
         assert IssuePropertyValue.objects.filter(issue=issue, property=prop).count() == 1
+
+
+@pytest.mark.contract
+class TestIssueCreateWithPropertyValues(TestIssuePropertyBase):
+    @pytest.mark.django_db
+    def test_create_issue_backfills_text_default(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+        issue_type = self.make_type(workspace, project)
+        prop = self.make_property(
+            workspace, project, issue_type, property_type="TEXT", default_value=["medium"]
+        )
+
+        response = session_client.post(
+            self.issues_url(workspace.slug, project.id),
+            {"name": "With default", "type_id": str(issue_type.id)},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        issue_id = response.json()["id"]
+        value = IssuePropertyValue.objects.get(issue_id=issue_id, property=prop)
+        assert value.value_text == "medium"
+
+    @pytest.mark.django_db
+    def test_create_issue_backfills_default_option(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+        issue_type = self.make_type(workspace, project)
+        prop = self.make_property(workspace, project, issue_type, property_type="OPTION")
+        default_option = IssuePropertyOption.objects.create(
+            workspace=workspace, project=project, property=prop, name="High", is_default=True
+        )
+        IssuePropertyOption.objects.create(
+            workspace=workspace, project=project, property=prop, name="Low"
+        )
+
+        response = session_client.post(
+            self.issues_url(workspace.slug, project.id),
+            {"name": "With default option", "type_id": str(issue_type.id)},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        issue_id = response.json()["id"]
+        value = IssuePropertyValue.objects.get(issue_id=issue_id, property=prop)
+        assert value.value_option_id == default_option.id
+
+    @pytest.mark.django_db
+    def test_create_issue_inline_values_override_default(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+        issue_type = self.make_type(workspace, project)
+        prop = self.make_property(
+            workspace, project, issue_type, property_type="TEXT", default_value=["medium"]
+        )
+
+        response = session_client.post(
+            self.issues_url(workspace.slug, project.id),
+            {
+                "name": "With inline value",
+                "type_id": str(issue_type.id),
+                "property_values": {str(prop.id): ["critical"]},
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        issue_id = response.json()["id"]
+        values = IssuePropertyValue.objects.filter(issue_id=issue_id, property=prop)
+        assert values.count() == 1
+        assert values.first().value_text == "critical"
+
+    @pytest.mark.django_db
+    def test_create_issue_without_type_writes_no_values(self, session_client, workspace, create_user):
+        project = self.create_project(workspace, create_user)
+        issue_type = self.make_type(workspace, project)
+        self.make_property(
+            workspace, project, issue_type, property_type="TEXT", default_value=["medium"]
+        )
+
+        response = session_client.post(
+            self.issues_url(workspace.slug, project.id),
+            {"name": "No type"},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        issue_id = response.json()["id"]
+        assert not IssuePropertyValue.objects.filter(issue_id=issue_id).exists()

@@ -405,6 +405,23 @@ class IssueViewSet(BaseViewSet):
         if serializer.is_valid():
             serializer.save()
 
+            # Persist custom property values: apply each property's declared
+            # default for the issue's type, then override with any values sent
+            # inline under "property_values". Best-effort — never blocks the
+            # create (the modal already validates required values client-side).
+            from plane.app.views.issue_property.base import write_property_values_for_issue
+
+            try:
+                write_property_values_for_issue(
+                    project,
+                    serializer.instance,
+                    inline_payload=request.data.get("property_values"),
+                    apply_defaults=True,
+                    enforce_required=False,
+                )
+            except Exception:
+                pass
+
             # Track the issue
             issue_activity.delay(
                 type="issue.activity.created",
