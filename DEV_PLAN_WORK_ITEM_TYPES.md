@@ -284,8 +284,11 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
   - tests. Livrable : on peut créer/lister des types via l'API interne.
 - [x] **Session 2 — Data layer + store Types.** ✅ Types TS + `issue-type.service` + `IssueTypesStore` +
       hook `useIssueTypes` + registration. Typecheck 28/28, app boote sans erreur (RootStore construit). Détail §13.
-- [ ] **Session 3 — UI Types.** `issue-type-select`, `issue-type-switcher`/identifier, filtres, settings de
-      gestion des types + toggle projet. Livrable : types utilisables de bout en bout.
+- [~] **Session 3 — UI Types.** ✅ **Partie 1 (page settings)** : onglet + route + page « Work Item Types »
+  (activation + liste + créer/éditer/supprimer + set default), vérifiée en live via Chrome DevTools
+  (activation crée le type par défaut + backfill, création OK, protection du défaut). Détail §14.
+  ⏳ **Partie 2 restante** : `issue-type-select` (modale de création), badge `issue-type-identifier`,
+  `getIssueTypeIdOnProjectChange` (provider), filtres.
 - [ ] **Session 4 — Backend Epics (B2).** Champ `is_epic_enabled`, endpoints filtrés, audit du filtrage
       des listes. Livrable : API épics + non-régression.
 - [ ] **Session 5 — Store + UI Epics.** Store épic réel, page `/epics`, nav, modale. Livrable : épics
@@ -415,3 +418,30 @@ deux constructeurs).
 avec succès via Chrome DevTools (écran instance setup) → `new RootStore()` incluant `IssueTypesStore`
 construit sans erreur. Restent des warnings d'hydratation pré-existants (`next-themes`/`LogoSpinner` dans
 `root.tsx`), hors périmètre. Vérif fonctionnelle live (créer un type dans l'UI) → Session 3.
+
+---
+
+## 14. Session 3 (partie 1) — Page de settings Work Item Types (livré)
+
+**Fichiers créés** :
+
+- Route : `apps/web/app/(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/work-item-types/{page,header}.tsx`
+- UI : `apps/web/core/components/work-item-types/{settings-root,create-update-modal,delete-modal,index}.tsx`
+
+**Fichiers modifiés** : `apps/web/app/routes/core.ts` (route), `packages/types/src/settings.ts`
+(+`work_item_types`), `packages/constants/src/settings/project.ts` (`PROJECT_SETTINGS` + groupe
+WORK_STRUCTURE), `apps/web/core/components/settings/project/sidebar/item-icon.tsx` (icône `ListTodo`).
+
+**Décisions** : toggle d'activation **dans la page** (pas dans `PROJECT_FEATURES_LIST`) pour éviter une
+collision de clé i18n (`work_item_types` est un namespace). i18n : réutilise `work_item_types.label`.
+
+**Vérifié en live (Chrome DevTools, :3001)** — env de test (`admin@plane.local`, workspace `test-ws`,
+projet WIT) : onglet visible sous « Work Structure » · activation → crée le type par défaut « Task » +
+backfill · création « Bug » (toast succès) · suppression du défaut désactivée. Aucune erreur console
+imputable à la feature.
+
+**Reste (Session 3 partie 2)** : `issue-type-select` (dropdown modale de création → `type_id`),
+`getIssueTypeIdOnProjectChange` (provider CE), badge `IssueTypeIdentifier` / `IssueTypeSwitcher`, filtres.
+
+**Env de test** : stack backend Docker + `pnpm --filter web dev` (port **3001** ; le 3000 est un autre
+process). Compte : `admin@plane.local` / `Testpass123!`.
