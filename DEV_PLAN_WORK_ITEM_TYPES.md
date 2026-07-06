@@ -826,10 +826,15 @@ complets et polis.**
   dropdown d'ajout de filtre (aux côtés de State/Priority/…), sous-menu Task/Bug ; sélection **Bug → 0** résultat
   (« No matching results »), **Task → 3** (WIT-6/5/1). Côté API : `?filters={"issue_type__in":[TaskId]}` → 3,
   `[BugId]` → 0, statut 200. `check:types` 28/28, lint 0 erreur.
-- ⚠️ **Piège dev** : en `dev`, un **hard reload** de la page issues casse le contexte de l'instance de filtre
-  (erreurs d'hydratation SSR next-themes → « filter instance not available », toute la barre de filtres KO — **pré-
-  existant**, vérifié en retirant mes changements : même symptôme). Une **navigation client** (soft nav via la
-  sidebar, ex. Epics → Work items) ré-initialise l'instance et le filtre fonctionne. Non bloquant en build prod.
+- ✅ **Bug pré-existant corrigé** (`fix(web)`) : en `dev`, un hard reload cassait toute la barre de filtres. Deux
+  causes chaînées : (1) `HydrateFallback` (`app/root.tsx`) rendait un markup **theme-dependent** différent du
+  document prérendu (SPA mode `ssr:false`) → mismatch → hydratation avortée → bascule CSR ; (2) combiné au double-
+  invoke **StrictMode**, l'enregistrement de l'instance de filtre en **phase de render** (`useMemo` dans
+  `filters-hoc/base.tsx` `WorkItemFilterRoot`) se désynchronisait de sa suppression en **cleanup d'effet**, laissant
+  le toggle du header (monté séparément) sans instance (« filter instance not available » + setState-in-render). Fix :
+  `HydrateFallback` rend le même markup au prerender et au 1er paint client (div vide → spinner après `mount`) ;
+  `WorkItemFilterRoot` crée/enregistre l'instance dans un **effet** (symétrique avec la suppression). **Vérifié live
+  sur hard reload** : plus aucune des 3 erreurs, le dropdown d'ajout s'ouvre et le filtre par type marche.
 
 **⏳ Reste éventuel (post-S9)** : upload binaire réel pour FILE ; édition inline des propriétés custom dans le
 spreadsheet (aujourd'hui lecture seule) ; batch endpoint de valeurs pour éviter le N+1 sur les lignes visibles ;
