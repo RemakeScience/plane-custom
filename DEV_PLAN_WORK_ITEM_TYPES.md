@@ -175,17 +175,20 @@ livrée dès la Session 4 initiale ; endpoints + audit d'exclusion + parentage c
 
 - [x] `packages/types/src/issues/issue-type.ts` : `TIssueType`, `TProjectIssueType` (Session 2, exporté).
       Aussi ajouté `is_issue_type_enabled?` sur le type projet (`project/projects.ts`).
-- [ ] `packages/types/src/issues/issue-property.ts` (nouveau) : `EIssuePropertyType` (enum),
-      `TIssueProperty`, `TIssuePropertyOption`, `TIssuePropertySettings`.
-- [ ] Remplacer `TIssuePropertyValues = Record<string, unknown>` par un type structuré
-      (`packages/types/src/issues/issue-property-values.ts`), garder la rétrocompat des imports.
+- [x] `packages/types/src/issues/issue-property.ts` (Session 7) : `EIssuePropertyType`,
+      `EIssuePropertyRelationType`, `TIssueProperty`, `TIssuePropertyOption`, `TIssuePropertySettings`,
+      `TIssuePropertyWithOptions`. Exporté dans l'index.
+- [x] `TIssuePropertyValues` structuré en `Record<string, TIssuePropertyValue[]>`
+      (`TIssuePropertyValue = string | boolean | null`) + `TIssuePropertyValueErrors` (Session 7).
 
 ### Services (`apps/web/core/services`)
 
 - [x] `apps/web/core/services/issue-type.service.ts` : CRUD types + `markAsDefault` + `enable`
       (Session 2, mirror `module.service.ts`).
-- [ ] `apps/web/core/services/issue-property.service.ts` : CRUD propriétés + options + `propertiesAndOptions`.
-- [ ] `apps/web/core/services/issue-property-value.service.ts` : lecture/upsert des valeurs par issue.
+- [x] `apps/web/core/services/issue-property.service.ts` (Session 7) : `fetchPropertiesAndOptions` +
+      CRUD propriétés (`issue-types/<type>/properties/`) + CRUD options (`issue-properties/<id>/options/`).
+- [x] `apps/web/core/services/issue-property-value.service.ts` (Session 7) : `fetch` + `upsert` (bulk) des
+      valeurs par issue (`issues/<id>/property-values/`).
 - [ ] `apps/web/core/services/epic.service.ts` (ou réutiliser l'issue service avec le filtre épic).
 
 > Note : certains services sont aussi disponibles dans `packages/services/src` (variantes « sites »/public).
@@ -203,7 +206,12 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
 - [x] **Registration** — `issueTypes` branché dans `apps/web/core/store/root.store.ts` (constructeur +
       `resetOnSignOut`) + typé dans l'interface, via `@/plane-web/store/issue-types.store`.
 - [x] Hook `apps/web/core/hooks/store/use-issue-types.ts` (`useIssueTypes()`).
-- [ ] `issue-property.store.ts` + `issue-property-value.store.ts` (Session 7).
+- [x] `apps/web/ce/store/issue-properties.store.ts` (Session 7) : `IssuePropertiesStore` — maps
+      `propertyMap`/`optionMap`/`projectPropertyIdsMap`/`propertyOptionIdsMap`/`fetchedMap`, getters
+      (`getPropertyById`, `getProjectPropertyIds`, `getTypeProperties`, `getPropertyOptions`),
+      `fetchProjectProperties` (agrégé) + CRUD props/options (optimiste avec revert). Registration
+      `issueProperties` dans `root.store.ts` + hook `use-issue-properties.ts`. Valeurs par issue = via le
+      service directement (transient, consommé en Session 8). Voir §20.
 - [x] **Activer le store épic** (Session 5) — stubs `apps/web/ce/store/issue/epic/{issue,filter}.store.ts`
       remplacés : `ProjectEpics` passe `EIssueServiceType.EPICS` (via un param `serviceType` optionnel ajouté
       à `ProjectIssues`) ⇒ requêtes sur `/epics/`. Voir §18.
@@ -316,7 +324,10 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       0123 + serializers + viewsets/URLs (CRUD props/options, valeurs bulk upsert typé, endpoint agrégé) +
       validation (requis/multi/coercition). **12/12 tests** ; non-régression contract/app OK. Vérifié live
       (props/options/valeurs multi + agrégé + cascade) sur le projet WIT. Détail §19.
-- [ ] **Session 7 — Data layer + stores Propriétés.** Types, services, stores propriétés/valeurs.
+- [x] **Session 7 — Data layer + stores Propriétés.** ✅ Types TS (`issue-property.ts` + `TIssuePropertyValues`
+      structuré), services (`issue-property.service`, `issue-property-value.service`), store
+      `IssuePropertiesStore` + registration + hook `useIssueProperties`. `pnpm check:types` **28/28**, app boote
+      (RootStore construit), endpoint agrégé consommable. Détail §20.
 - [ ] **Session 8 — UI Propriétés.** Provider réel, rendu dynamique (modale/sidebar/layout), settings des
       propriétés par type. Livrable : propriétés custom de bout en bout.
 - [ ] **Session 9 — Polish & tests.** i18n complète, non-régressions, revue, doc.
@@ -659,3 +670,29 @@ DELETE 204 cascade.
 **Reste (follow-ups)** : intégration inline des valeurs dans `IssueViewSet.create/update` (le front appelle
 `property-values/` après create) ; filtrage/tri par valeur ; `default_value` appliqué à la création
 (Sessions 7/8/9).
+
+---
+
+## 20. Session 7 — Data layer + stores Propriétés (livré)
+
+**Types** (`packages/types/src/issues/`) : `issue-property.ts` — `EIssuePropertyType` (9 types),
+`EIssuePropertyRelationType` (ISSUE/MEMBER), `TIssueProperty`, `TIssuePropertyOption`,
+`TIssuePropertySettings`, `TIssuePropertyWithOptions`. `issue-property-values.ts` structuré :
+`TIssuePropertyValue = string | boolean | null`, `TIssuePropertyValues = Record<string, TIssuePropertyValue[]>`.
+Exportés dans l'index.
+
+**Services** (`apps/web/core/services/`) : `issue-property.service.ts` (`fetchPropertiesAndOptions`, CRUD
+propriétés scopées type, CRUD options scopées propriété) ; `issue-property-value.service.ts` (`fetch` +
+`upsert` bulk). Alignés sur les endpoints backend §19.
+
+**Store** (`apps/web/ce/store/issue-properties.store.ts`) : `IssuePropertiesStore` — observables
+`propertyMap`/`optionMap`/`projectPropertyIdsMap`/`propertyOptionIdsMap`/`fetchedMap` ; getters
+`getPropertyById`/`getProjectPropertyIds`/`getTypeProperties`/`getPropertyOptions` ; `fetchProjectProperties`
+(endpoint agrégé) + CRUD props/options optimiste avec revert. Registration `issueProperties` dans
+`root.store.ts` (2 constructeurs + interface) ; hook `use-issue-properties.ts`.
+
+**Choix** : les **valeurs par issue** (transient) ne passent pas par le store — lues/écrites via
+`IssuePropertyValueService` directement dans le provider de la modale (Session 8).
+
+**Vérification** : `pnpm check:types` **28/28**, oxlint 0 warning, app rendue (RootStore construit avec
+`IssuePropertiesStore`), endpoint agrégé consommé (200) via la session navigateur.

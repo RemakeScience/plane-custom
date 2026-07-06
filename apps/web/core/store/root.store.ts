@@ -21,6 +21,8 @@ import type { IStateStore } from "@/plane-web/store/state.store";
 import { StateStore } from "@/plane-web/store/state.store";
 import type { IIssueTypesStore } from "@/plane-web/store/issue-types.store";
 import { IssueTypesStore } from "@/plane-web/store/issue-types.store";
+import type { IIssuePropertiesStore } from "@/plane-web/store/issue-properties.store";
+import { IssuePropertiesStore } from "@/plane-web/store/issue-properties.store";
 import { WorkspaceRootStore } from "@/plane-web/store/workspace";
 // stores
 import type { ICycleStore } from "./cycle.store";
@@ -86,6 +88,7 @@ export class CoreRootStore {
   issue: IIssueRootStore;
   state: IStateStore;
   issueTypes: IIssueTypesStore;
+  issueProperties: IIssuePropertiesStore;
   label: ILabelStore;
   dashboard: IDashboardStore;
   analytics: IAnalyticsStore;
@@ -123,6 +126,7 @@ export class CoreRootStore {
     this.issue = new IssueRootStore(this as unknown as RootStore);
     this.state = new StateStore(this as unknown as RootStore);
     this.issueTypes = new IssueTypesStore(this as unknown as RootStore);
+    this.issueProperties = new IssuePropertiesStore(this as unknown as RootStore);
     this.label = new LabelStore(this);
     this.dashboard = new DashboardStore(this);
     this.multipleSelect = new MultipleSelectStore();
@@ -158,6 +162,7 @@ export class CoreRootStore {
     this.issue = new IssueRootStore(this as unknown as RootStore);
     this.state = new StateStore(this as unknown as RootStore);
     this.issueTypes = new IssueTypesStore(this as unknown as RootStore);
+    this.issueProperties = new IssuePropertiesStore(this as unknown as RootStore);
     this.label = new LabelStore(this);
     this.dashboard = new DashboardStore(this);
     this.projectInbox = new ProjectInboxStore(this);
