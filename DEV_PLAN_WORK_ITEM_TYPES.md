@@ -284,11 +284,11 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
   - tests. Livrable : on peut créer/lister des types via l'API interne.
 - [x] **Session 2 — Data layer + store Types.** ✅ Types TS + `issue-type.service` + `IssueTypesStore` +
       hook `useIssueTypes` + registration. Typecheck 28/28, app boote sans erreur (RootStore construit). Détail §13.
-- [~] **Session 3 — UI Types.** ✅ **Partie 1 (page settings)** : onglet + route + page « Work Item Types »
-  (activation + liste + créer/éditer/supprimer + set default), vérifiée en live via Chrome DevTools
-  (activation crée le type par défaut + backfill, création OK, protection du défaut). Détail §14.
-  ⏳ **Partie 2 restante** : `issue-type-select` (modale de création), badge `issue-type-identifier`,
-  `getIssueTypeIdOnProjectChange` (provider), filtres.
+- [x] **Session 3 — UI Types.** ✅ **P1 (page settings)** : onglet + route + page (activation + CRUD +
+      défaut) — §14. ✅ **P2 (types sur les work items)** : `IssueTypeSelect` (dropdown modale de création),
+      badge `IssueTypeIdentifier`, `getIssueTypeIdOnProjectChange` (défaut pré-sélectionné) — §15. Vérifiés
+      live end-to-end. Reste optionnel : badge sur layouts liste/spreadsheet (gated par display-property
+      `issue_type`), filtres par type, vrai switcher de type dans le détail.
 - [ ] **Session 4 — Backend Epics (B2).** Champ `is_epic_enabled`, endpoints filtrés, audit du filtrage
       des listes. Livrable : API épics + non-régression.
 - [ ] **Session 5 — Store + UI Epics.** Store épic réel, page `/epics`, nav, modale. Livrable : épics
@@ -445,3 +445,31 @@ imputable à la feature.
 
 **Env de test** : stack backend Docker + `pnpm --filter web dev` (port **3001** ; le 3000 est un autre
 process). Compte : `admin@plane.local` / `Testpass123!`.
+
+---
+
+## 15. Session 3 (partie 2) — Types sur les work items (livré)
+
+**Fichiers (stubs CE remplacés / modifiés)** :
+
+- `apps/web/ce/components/issues/issue-modal/issue-type-select.tsx` — `IssueTypeSelect` réel : dropdown
+  (`CustomSearchSelect`) des types actifs du projet, câblé sur le champ `type_id` du formulaire ; ne rend
+  rien si la feature est off ou aucun type. Fetch paresseux des types.
+- `apps/web/ce/components/issues/issue-modal/provider.tsx` — `getIssueTypeIdOnProjectChange` renvoie le
+  type par défaut du projet (valeur du contexte mémoïsée pour satisfaire le lint).
+- `apps/web/ce/components/issues/issue-details/issue-identifier.tsx` — `IssueTypeIdentifier` réel (icône
+  `Logo` du type) + branché dans `IssueIdentifier` (affiché si `displayProperties.issue_type`), avec
+  fetch paresseux des types (garde `fetchedMap`).
+
+**Bug corrigé** 🐛 : `IssueTypesStore.getProjectIssueTypes(projectId, activeOnly?)` était en `computedFn` —
+mobx-utils `DeepMap` exige un **nombre d'arguments constant** ⇒ crash « expected: 2, got: 1 » quand appelé
+avec 1 puis 2 args. Passé en fonction simple (réactivité conservée via `getProjectIssueTypeIds`/`issueTypeMap`).
+
+**Vérifié en live (Chrome DevTools)** : modale de création → dropdown liste **Task/Bug** · sélection « Bug »
+
+- création → **WIT-1** créée, `type_id` = Bug **confirmé en base** · icône 🐛 posée sur le type Bug → badge
+  visible sur la **page de détail**. Aucune erreur console imputable à la feature.
+
+**Notes** : le badge sur les layouts liste/spreadsheet dépend de la display-property `issue_type` (off par
+défaut pour l'utilisateur de test → normal). Un vrai « switcher » (changer le type depuis le détail) et les
+filtres par type restent à faire si besoin.
