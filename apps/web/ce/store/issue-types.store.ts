@@ -88,15 +88,19 @@ export class IssueTypesStore implements IIssueTypesStore {
   /**
    * @description returns the issue types associated with a project
    * @param activeOnly when true, only active types are returned
+   *
+   * Not wrapped in `computedFn` because it takes an optional second argument, and
+   * mobx-utils' DeepMap requires a consistent argument count across calls.
+   * Reactivity still flows through `getProjectIssueTypeIds` and `issueTypeMap`.
    */
-  getProjectIssueTypes = computedFn((projectId: string | null | undefined, activeOnly = false) => {
+  getProjectIssueTypes = (projectId: string | null | undefined, activeOnly = false) => {
     const issueTypeIds = this.getProjectIssueTypeIds(projectId);
     if (!issueTypeIds) return undefined;
     const issueTypes = issueTypeIds
       .map((issueTypeId) => this.issueTypeMap[issueTypeId])
       .filter((issueType): issueType is TIssueType => Boolean(issueType));
     return activeOnly ? issueTypes.filter((issueType) => issueType.is_active) : issueTypes;
-  });
+  };
 
   /**
    * @description returns the default issue type id for a project
