@@ -287,8 +287,8 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
 - [x] **Session 3 — UI Types.** ✅ **P1 (page settings)** : onglet + route + page (activation + CRUD +
       défaut) — §14. ✅ **P2 (types sur les work items)** : `IssueTypeSelect` (dropdown modale de création),
       badge `IssueTypeIdentifier`, `getIssueTypeIdOnProjectChange` (défaut pré-sélectionné) — §15. Vérifiés
-      live end-to-end. Reste optionnel : badge sur layouts liste/spreadsheet (gated par display-property
-      `issue_type`), filtres par type, vrai switcher de type dans le détail.
+      live end-to-end. ✅ **P3 (optionnelles)** : switcher de type interactif dans le détail, toggle
+      display-property `issue_type`, filtres par type (backend + composants) — §16.
 - [ ] **Session 4 — Backend Epics (B2).** Champ `is_epic_enabled`, endpoints filtrés, audit du filtrage
       des listes. Livrable : API épics + non-régression.
 - [ ] **Session 5 — Store + UI Epics.** Store épic réel, page `/epics`, nav, modale. Livrable : épics
@@ -470,6 +470,28 @@ avec 1 puis 2 args. Passé en fonction simple (réactivité conservée via `getP
 - création → **WIT-1** créée, `type_id` = Bug **confirmé en base** · icône 🐛 posée sur le type Bug → badge
   visible sur la **page de détail**. Aucune erreur console imputable à la feature.
 
-**Notes** : le badge sur les layouts liste/spreadsheet dépend de la display-property `issue_type` (off par
-défaut pour l'utilisateur de test → normal). Un vrai « switcher » (changer le type depuis le détail) et les
-filtres par type restent à faire si besoin.
+**Notes** : le badge sur les layouts liste/spreadsheet dépend de la display-property `issue_type`.
+
+---
+
+## 16. Session 3 (partie 3) — Optionnelles (livré)
+
+- **Switcher de type interactif** — `apps/web/ce/components/issues/issue-details/issue-type-switcher.tsx` :
+  dropdown (`CustomSearchSelect`) qui change le type d'une issue existante via `updateIssue`, fallback sur
+  l'identifiant simple si feature off / read-only. **Vérifié live** : Bug→Task changé depuis le détail,
+  confirmé en base.
+- **Display-property `issue_type`** — ajouté à `ISSUE_DISPLAY_PROPERTIES` (`packages/constants/src/issue/common.ts`)
+  ⇒ toggle « Work item Types » dans le menu Display pour montrer/cacher le badge sur les layouts. (Au passage,
+  suppression d'un warning oxlint pré-existant `no-duplicate-enum-values` sur `project`/`team_project`.)
+- **Filtres par type** :
+  - Backend : `filter_issue_type` dans `apps/api/plane/utils/issue_filters.py` (+ dispatch `"issue_type"`) →
+    `type__in` / `type__isnull`. **Vérifié** (le filtre renvoie bien les issues du type).
+  - Frontend : `FilterIssueTypes` (sélection) + `AppliedIssueTypeFilters` (chip) implémentés depuis le store ;
+    **wirés dans le widget sub-issues** (déjà consommateur + `issue_type` dans ses filtres dispo).
+
+**⏳ Reste (follow-up dédié)** : brancher le filtre par type dans le **filtre principal des work items**, qui
+utilise le système typé **rich-filters** (`packages/utils/src/work-item-filters/configs/filters/*`,
+`apps/web/core/hooks/work-item-filters/use-work-item-filters-config.tsx`). Il faut : étendre
+`TWorkItemFilterProperty`, créer une config `work-item-type.ts` (mirror de `state.ts`), l'enregistrer dans le
+hook (gate `allowedFilters`), et mapper la clé rich-filter vers le param API `issue_type`. Chantier typé
+multi-fichiers → mérite sa propre session.
