@@ -1233,9 +1233,18 @@ de vérifier que chaque marqueur a survécu.
 grep -rn "\[FORK\]" apps packages --include=*.ts --include=*.tsx --include=*.py | grep -v node_modules
 ```
 
-État actuel : la feature GitHub est intégralement marquée (slug `github-pr-integration`). **À faire (dette)** : passer
-les fichiers des sessions antérieures (Work Item Types / Epics / Custom Properties) sous le même marquage — c'est le
-plus gros de la surface et il n'est pas encore annoté.
+État actuel (2026-07-07) : **toute la surface de divergence est marquée** — **128 marqueurs** au total :
+`github-pr-integration` (15) pour la liaison GitHub, `work-item-types` (113) pour l'ensemble des sessions antérieures
+(Work Item Types / Epics / Custom Properties). Slugs utilisés :
+- `github-pr-integration` — liaison GitHub (§24).
+- `work-item-types` — umbrella pour tout le reste du fork (types d'items, epics, propriétés custom, upload FILE, fix
+  d'hydratation §22).
+
+Convention : un marqueur par **région contiguë** de divergence ; pour un fichier qui est une **réécriture complète**
+d'un stub upstream, un seul marqueur bannière en tête. Deux fichiers n'ont pas pu être marqués sur la ligne exacte car
+leur seule divergence est un **attribut JSX** (pas de position de commentaire valide) — le marqueur a été posé sur
+l'élément JSX parent. Après chaque merge upstream, re-vérifier que le nombre de marqueurs n'a pas chuté (un marqueur
+disparu = un bloc fork écrasé par l'upstream).
 
 ### 26.3 Procédure de sync upstream recommandée
 
