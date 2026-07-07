@@ -202,7 +202,10 @@ class SubIssuesEndpoint(BaseAPIView):
 
     # Assign multiple sub issues
     def post(self, request, slug, project_id, issue_id):
-        parent_issue = Issue.issue_objects.get(pk=issue_id)
+        # [FORK] work-item-types — resolve the parent via Issue.objects (includes
+        # epics); issue_objects excludes epics, so an epic parent raised
+        # DoesNotExist → 404 when adding children to an epic.
+        parent_issue = Issue.objects.get(pk=issue_id)
         sub_issue_ids = request.data.get("sub_issue_ids", [])
 
         if not len(sub_issue_ids):

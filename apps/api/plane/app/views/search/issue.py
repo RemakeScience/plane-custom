@@ -39,7 +39,9 @@ class IssueSearchEndpoint(BaseAPIView):
         Search issues and epics by query excluding the parent
         """
 
-        issue = Issue.issue_objects.filter(pk=issue_id).first()
+        # [FORK] work-item-types — look up the target via Issue.objects (includes
+        # epics); issue_objects excludes epics, so an epic parent would be None.
+        issue = Issue.objects.filter(pk=issue_id).first()
         if issue:
             issues = issues.filter(~Q(pk=issue_id), ~Q(pk=issue.parent_id), ~Q(parent_id=issue_id))
         return issues
@@ -49,7 +51,8 @@ class IssueSearchEndpoint(BaseAPIView):
         Filter issues excluding related issues
         """
 
-        issue = Issue.issue_objects.filter(pk=issue_id).first()
+        # [FORK] work-item-types — include epics in the target lookup (see above).
+        issue = Issue.objects.filter(pk=issue_id).first()
         related_issue_ids = (
             IssueRelation.objects.filter(Q(related_issue=issue) | Q(issue=issue))
             .values_list("issue_id", "related_issue_id")
@@ -68,11 +71,14 @@ class IssueSearchEndpoint(BaseAPIView):
         """
         Filter root issues only
         """
-        issue = Issue.issue_objects.filter(pk=issue_id).first()
+        # [FORK] work-item-types — include epics in the target lookup (issue_objects
+        # excludes them, so an epic parent returned None and crashed on .parent →
+        # 500 when adding a sub work item to an epic). Guard .parent under `if issue`.
+        issue = Issue.objects.filter(pk=issue_id).first()
         if issue:
             issues = issues.filter(~Q(pk=issue_id), parent__isnull=True)
-        if issue.parent:
-            issues = issues.filter(~Q(pk=issue.parent_id))
+            if issue.parent_id:
+                issues = issues.filter(~Q(pk=issue.parent_id))
         return issues
 
     def exclude_issues_in_cycles(self, issues: QuerySet) -> QuerySet:

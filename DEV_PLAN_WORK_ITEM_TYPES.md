@@ -893,6 +893,24 @@ un work item dans les deux sens** : issue régulière → Epic **et** Epic → i
   rechargement ; le routing par type gère correctement la ré-édition immédiate, mais un refetch/redirection auto vers la
   bonne vue après conversion serait un plus (non bloquant).
 
+### Enfants d'un epic = n'importe quel work item (2026-07-07, livré & vérifié live)
+
+Ajouter un **sous-item existant à un epic** échouait (liste vide + impossible d'ajouter). Deux endpoints **upstream**
+n'avaient pas été mis à jour quand le fork a introduit les epics (exclus de `Issue.issue_objects`) :
+
+- `app/views/search/issue.py` : les helpers (`filter_root_issues_only`, `search_issues_and_excluding_parent`,
+  `filter_issues_excluding_related_issues`) résolvaient le parent via `Issue.issue_objects.filter(pk=issue_id)` → `None`
+  pour un parent epic → `filter_root_issues_only` crashait sur `issue.parent` → **500** (`/search-issues/?sub_issue=true`).
+- `app/views/issue/sub_issue.py` : le POST faisait `Issue.issue_objects.get(pk=issue_id)` → `DoesNotExist` → **404**.
+- **Fix** : résoudre le parent/self via `Issue.objects` (inclut les epics) + garde `.parent` sous `if issue`. Les
+  **candidats** restent des work items réguliers (la base `Issue.issue_objects` exclut les epics), donc un epic accepte
+  désormais **n'importe quel work item régulier** en enfant.
+- **Vérif live** : `/search-issues/?sub_issue=true&issue_id=<epic>` → 200 (candidats réguliers) ;
+  `POST epics|issues/<epic>/sub-issues/` → 200 (l'enfant est bien rattaché).
+- **⚠️ Pattern systémique à surveiller** : partout où le code fait `Issue.issue_objects.filter(pk=...)` /
+  `.get(pk=...)` sur un id qui **peut être un epic** (parent/self/target), il faut `Issue.objects`. Audit rapide :
+  `grep -rn "issue_objects\.\(filter\|get\)(pk=" apps/api` puis vérifier si la cible peut être un epic.
+
 ### Backlog / nice-to-have (non bloquant, aucun engagement)
 
 - **Colonnes custom en vue workspace** (multi-projet) : aujourd'hui les colonnes/valeurs custom du spreadsheet sont
