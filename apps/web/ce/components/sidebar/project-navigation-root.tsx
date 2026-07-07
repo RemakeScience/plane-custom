@@ -7,8 +7,8 @@
 // [FORK] work-item-types
 import { observer } from "mobx-react";
 // plane imports
+import { LayoutList } from "lucide-react";
 import { EUserPermissions } from "@plane/constants";
-import { LayersIcon } from "@plane/propel/icons";
 // components
 import type { TNavigationItem } from "@/components/workspace/sidebar/project-navigation";
 import { ProjectNavigation } from "@/components/workspace/sidebar/project-navigation";
@@ -36,7 +36,7 @@ export const ProjectNavigationRoot = observer(function ProjectNavigationRoot(pro
       key: "epics",
       name: "Epics",
       href: `/${currentWorkspaceSlug}/projects/${currentProjectId}/epics`,
-      icon: LayersIcon,
+      icon: LayoutList,
       access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
       shouldRender: project?.is_epic_enabled ?? false,
       sortOrder: 1.5,
