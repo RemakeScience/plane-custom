@@ -44,6 +44,9 @@ class FileAsset(BaseModel):
         PROJECT_COVER = "PROJECT_COVER"
         DRAFT_ISSUE_ATTACHMENT = "DRAFT_ISSUE_ATTACHMENT"
         DRAFT_ISSUE_DESCRIPTION = "DRAFT_ISSUE_DESCRIPTION"
+        # File uploaded as the value of a FILE custom property. Project-scoped,
+        # not tied to a single issue (it is created from the create modal too).
+        ISSUE_PROPERTY_VALUE = "ISSUE_PROPERTY_VALUE"
 
     attributes = models.JSONField(default=dict)
     asset = models.FileField(upload_to=get_upload_path, max_length=800)

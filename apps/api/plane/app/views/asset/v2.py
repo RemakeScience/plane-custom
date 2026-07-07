@@ -540,18 +540,25 @@ class ProjectAssetEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Check if the file type is allowed
-        allowed_types = [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/jpg",
-            "image/gif",
-        ]
+        # Check if the file type is allowed. FILE custom property values accept
+        # the broad attachment set (PDF/Office/text/...); everything else stays
+        # image-only.
+        if entity_type == FileAsset.EntityTypeContext.ISSUE_PROPERTY_VALUE:
+            allowed_types = settings.ATTACHMENT_MIME_TYPES
+            error_message = "Invalid file type."
+        else:
+            allowed_types = [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "image/jpg",
+                "image/gif",
+            ]
+            error_message = "Invalid file type. Only JPEG, PNG, WebP, JPG and GIF files are allowed."
         if type not in allowed_types:
             return Response(
                 {
-                    "error": "Invalid file type. Only JPEG, PNG, WebP, JPG and GIF files are allowed.",
+                    "error": error_message,
                     "status": False,
                 },
                 status=status.HTTP_400_BAD_REQUEST,
