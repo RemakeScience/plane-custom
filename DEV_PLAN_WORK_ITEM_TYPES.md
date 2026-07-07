@@ -762,9 +762,9 @@ dans `IssueViewSet.create` (aujourd'hui appel séparé `property-values/` après
 
 - Helpers réutilisables extraits dans `issue_property/base.py` : `default_values_payload(type_id)` (défauts
   d'un type — options `is_default` pour OPTION, `default_value` sinon), `build_property_values(project,
-  issue_id, payload, enforce_required)` (validation + construction des lignes), `persist_property_values`
+issue_id, payload, enforce_required)` (validation + construction des lignes), `persist_property_values`
   (hard-replace transactionnel), `write_property_values_for_issue(project, issue, inline_payload,
-  apply_defaults, enforce_required)`. `IssuePropertyValueEndpoint.post` refactoré pour les réutiliser (comportement
+apply_defaults, enforce_required)`. `IssuePropertyValueEndpoint.post` refactoré pour les réutiliser (comportement
   strict inchangé : `enforce_required=True`).
 - `IssueViewSet.create` : après `serializer.save()`, appel best-effort (jamais bloquant, `enforce_required=False`)
   qui **applique les défauts du type** puis **écrase avec les valeurs inline** envoyées sous `property_values`
@@ -861,12 +861,12 @@ live sur le layout spreadsheet (colonne « Severity », édition High persistée
 
 Après la S9, quatre incréments ont été livrés, chacun vérifié live et commité (branche `feat/work-item-types`) :
 
-| # | Incrément | Commits | Vérif |
-| - | --------- | ------- | ----- |
-| 1 | **Filtre par type dans la vue principale** (rich-filters) — clé `issue_type` + config miroir de `state`, filtre backend `IssueFilterSet`, gate `is_issue_type_enabled`, fetch des types au montage du HOC | `feat(api)` + `feat(web)` | Live : Bug→0, Task→3 ; API 200 ; §22 E |
-| 2 | **Fix bug d'hydratation/filtres** (pré-existant) — `HydrateFallback` stable + instance de filtre créée en effet (StrictMode-safe) | `fix(web)` | Live hard reload : plus d'erreurs, dropdown OK ; §22 |
-| 3 | **Spreadsheet batch + édition inline** — endpoint batch valeurs, cache store, cellules éditables (fin du N+1) | `feat(api)` + `feat(web)` | Live : édition Severity persistée, 0 N+1 |
-| 4 | **FILE = vrai upload** — réutilise le pipeline d'assets projet (MinIO dev / Scaleway prod par config) ; type `ISSUE_PROPERTY_VALUE` + MIME élargis ; composant `file-field.tsx` (modale/sidebar/spreadsheet) ; i18n 19 locales | `feat(api)` + `feat(web)` | Live E2E : presign 200 → MinIO 204 → confirm 204 → download 302 |
+| #   | Incrément                                                                                                                                                                                                                      | Commits                   | Vérif                                                           |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- | --------------------------------------------------------------- |
+| 1   | **Filtre par type dans la vue principale** (rich-filters) — clé `issue_type` + config miroir de `state`, filtre backend `IssueFilterSet`, gate `is_issue_type_enabled`, fetch des types au montage du HOC                      | `feat(api)` + `feat(web)` | Live : Bug→0, Task→3 ; API 200 ; §22 E                          |
+| 2   | **Fix bug d'hydratation/filtres** (pré-existant) — `HydrateFallback` stable + instance de filtre créée en effet (StrictMode-safe)                                                                                              | `fix(web)`                | Live hard reload : plus d'erreurs, dropdown OK ; §22            |
+| 3   | **Spreadsheet batch + édition inline** — endpoint batch valeurs, cache store, cellules éditables (fin du N+1)                                                                                                                  | `feat(api)` + `feat(web)` | Live : édition Severity persistée, 0 N+1                        |
+| 4   | **FILE = vrai upload** — réutilise le pipeline d'assets projet (MinIO dev / Scaleway prod par config) ; type `ISSUE_PROPERTY_VALUE` + MIME élargis ; composant `file-field.tsx` (modale/sidebar/spreadsheet) ; i18n 19 locales | `feat(api)` + `feat(web)` | Live E2E : presign 200 → MinIO 204 → confirm 204 → download 302 |
 
 **État global** : Work Item Types + Epics + Custom Properties **complets, polis et vérifiés**. `check:types` 28/28,
 lint web 0 erreur, oxfmt clean, i18n 19/19, contract/app **121 passés** (8 rate-limit magic-link pré-existants).
@@ -882,15 +882,21 @@ lint web 0 erreur, oxfmt clean, i18n 19/19, contract/app **121 passés** (8 rate
   modale/sidebar) — on pourrait y mettre le `PropertyRelationField` comme pour les autres types.
 - **Batch endpoint épics-detail / GANTT** : `epics-detail/` existe (S9) ; vérifier d'autres 404 non fatals éventuels.
 - **`default_value` côté settings UI** : le backend applique `default_value`/option `is_default` à la création, mais
-  l'UI settings ne permet pas encore de *saisir* un défaut par propriété (à ajouter dans `type-properties.tsx`).
+  l'UI settings ne permet pas encore de _saisir_ un défaut par propriété (à ajouter dans `type-properties.tsx`).
 
 ---
 
-## 24. Session 10 (prépa) — Liaison GitHub ↔ Plane (PR sur les work items)
+## 24. Session 10 — Liaison GitHub ↔ Plane (PR sur les work items) — **LIVRÉ**
 
-> Section de préparation pour une session lancée **en contexte vierge**. Objectif : pouvoir dire
-> « vas-y, on passe à la liaison GitHub » avec tout le contexte ici. Rien n'est encore codé pour cette liaison ;
-> ci-dessous = reconnaissance + plan.
+> **État : LIVRÉ le 2026-07-07** sur la branche `feat/github-pr-integration` (3 commits, non poussée à ce jour).
+> MVP complet, testé de bout en bout (25 tests backend verts, widget validé via Chrome DevTools sur un work item réel).
+> Les sous-sections 24.1–24.8 ci-dessous documentent l'**objectif et la conception** (toujours exacts). Le récap de
+> **ce qui a réellement été codé** est en **24.9**. Le **guide de mise en production du fork** (handoff pour l'agent
+> DevOps) est en **§25**.
+>
+> Décisions d'archi actées avec l'utilisateur : **GitHub App + webhooks entrants**, sens **GitHub → Plane** seulement
+> (bidirectionnel = plus tard), **modèle `GithubPullRequest` dédié** (état live + URL d'env éphémère), **multi-repo**
+> (front + API, même org).
 
 ### 24.1 Objectif
 
@@ -914,7 +920,7 @@ plus tard, hors MVP). Le mécanisme (GitHub App vs OAuth, webhooks vs polling) e
 - **Modèles d'intégration DORMANTS** (présents en DB, aucune vue/serializer/url branchée — scaffolding legacy) :
   `apps/api/plane/db/models/integration/` : `Integration`, `WorkspaceIntegration` (bot `actor`, `api_token`,
   `config`), `github.py` : `GithubRepository`, `GithubRepositorySync`, `GithubIssueSync` (mirroring d'**issues**, pas
-  de PR), `GithubCommentSync`. ⇒ à *revive* ou ignorer. **Aucun modèle PR n'existe.**
+  de PR), `GithubCommentSync`. ⇒ à _revive_ ou ignorer. **Aucun modèle PR n'existe.**
 - **Surface « lien externe » sur un work item, réutilisable** : `IssueLink` (`db/models/issue.py:392`, `title`+`url`+
   `metadata` JSON) + `IssueLinkViewSet` (`app/views/issue/link.py`) + widget front
   `apps/web/core/components/issues/issue-detail/links/*`. ⇒ chemin le plus rapide pour « afficher une PR » (url = lien
@@ -932,7 +938,7 @@ plus tard, hors MVP). Le mécanisme (GitHub App vs OAuth, webhooks vs polling) e
 
 - **Endpoint entrant** recevant les webhooks GitHub (`pull_request`, `pull_request_review`, `push`) — aucun récepteur
   inbound n'existe.
-- **Helper de vérification HMAC entrante** (`X-Hub-Signature-256`) — n'existe pas (seule la signature *sortante*
+- **Helper de vérification HMAC entrante** (`X-Hub-Signature-256`) — n'existe pas (seule la signature _sortante_
   existe) ; à écrire en comparaison constant-time.
 - **Modèle PR** `GithubPullRequest` (ou `IssueLinkedPR`) : pr_number, repo, url, title, state, author, merged_at, FK
   `Issue` (+ workspace/project) + migration. `GithubIssueSync` ne couvre pas les PR.
@@ -995,3 +1001,185 @@ Dire : « **vas-y, on passe à la liaison GitHub** ». Le nouvel agent doit lire
 `plane-fork-work-item-types`, valider l'option d'archi (24.4) avec l'utilisateur, puis dérouler le plan 24.5 sur une
 **nouvelle branche** (ex. `feat/github-pr-integration`) — ne pas continuer sur `feat/work-item-types` (dédiée aux
 types/propriétés).
+
+### 24.9 Ce qui a réellement été livré (récap technique)
+
+Branche `feat/github-pr-integration`. Comportements livrés, tous vérifiés :
+
+1. Une PR qui référence un work item (`#IDENT-seq` — `IDENT` = `project.identifier`, `seq` = `issue.sequence_id`,
+   dans le **titre**, la **branche head** ou le **body**) → **rattachée automatiquement** au work item (upsert d'un
+   `GithubPullRequest`).
+2. PR **mergée** (`action=closed` + `merged=true`) → l'issue passe dans l'état du groupe **`completed`** du projet
+   (plus petit `sequence`), via le pipeline standard `issue_activity` → `track_state` (apparaît dans le feed d'activité).
+   Garde-fou : no-op si l'issue est déjà dans un état `completed`.
+3. Un **commentaire de PR** contenant une URL avec le mot `preview` → l'URL est stockée dans `ephemeral_env_url` et
+   affichée sur le work item (event `issue_comment`).
+4. **Widget « Pull Requests »** (collapsible) sur le détail du work item : badge d'état (Open/Merged/Closed), lien PR
+   (`repo #num — titre`), auteur + « il y a X », et lien **« Open preview environment »** si `ephemeral_env_url`. Le
+   widget fetch au montage et **s'auto-masque** s'il n'y a aucune PR.
+
+**Fichiers backend (`apps/api/plane/`)** :
+
+- `db/models/github.py` — modèles `GithubPullRequest` (FK issue, `pr_number`, `repository_full_name`, `url`, `state`
+  OPEN/CLOSED/MERGED, `merged`, `author_login`, `ephemeral_env_url`, `github_pr_id`, `merged_at`) et
+  `GithubRepositoryMap` (`repository_id`, `full_name`, `installation_id`). Enregistrés dans `db/models/__init__.py`.
+- Migration `db/migrations/0124_githubrepositorymap_githubpullrequest.py` (tables `github_pull_requests`,
+  `github_repository_maps`).
+- `utils/github_signature.py` — `verify_github_signature()` : HMAC-SHA256 **constant-time** sur le **body brut**,
+  header `X-Hub-Signature-256` (format `sha256=<hex>`).
+- `app/views/external/github/receiver.py` — `GithubWebhookEndpoint` (`AllowAny`, pas d'auth session) : vérifie la
+  signature, gère `ping`, enfile `github_webhook_task.delay(...)`, répond **202** vite.
+- `app/views/external/github/settings.py` — `GithubRepositoryMapEndpoint` (CRUD mapping repo↔projet,
+  `WorkspaceEntityPermission`) + `GithubPullRequestListEndpoint` (lecture des PR d'une issue, `ProjectEntityPermission`).
+- `app/urls/external_github.py` (branché dans `app/urls/__init__.py`).
+- `bgtasks/github_webhook_task.py` — regex `WORK_ITEM_REF` + `EPHEMERAL_URL`, handlers `_handle_pull_request` /
+  `_handle_issue_comment`, `_move_issue_to_completed`. Celery `@shared_task`.
+- `app/serializers/github.py` (+ export dans `serializers/__init__.py`).
+- Config : 4 clés ajoutées à `github_config_variables` dans `utils/instance_config_variables/core.py` :
+  `GITHUB_APP_ID`, `GITHUB_APP_SLUG` (clairs), `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET` (chiffrés).
+- Tests : `tests/unit/utils/test_github_signature.py`, `tests/unit/bgtasks/test_github_webhook.py`,
+  `tests/contract/app/test_github_webhook.py` (25 tests).
+
+**Fichiers frontend (`apps/web/`, `packages/`)** :
+
+- Types `packages/types/src/issues/github_pull_request.ts` (+ export dans `issues/base.ts`, + `"pull-requests"` ajouté
+  à `TWorkItemWidgets` dans `issues/issue.ts`).
+- Store `core/store/issue/issue-details/github-pull-request.store.ts` (read-only) câblé dans `.../root.store.ts`.
+- Méthode `fetchGithubPullRequests` dans `core/services/issue/issue.service.ts`.
+- Widget `core/components/issues/issue-detail-widgets/pull-requests/*` (root/title/content/pull-request-detail/index).
+- Enregistré via la couture de fork CE `ce/components/issues/issue-detail-widgets/collapsibles.tsx` (aucune édition du
+  registre core).
+- i18n : bloc top-level `pull_requests` dans les **19 locales** (`packages/i18n/.../common.json`), `sync:check` à 100 %.
+
+**Endpoints exposés** (préfixe `/api/`, donc déjà routés par le proxy Plane existant) :
+
+- `POST /api/workspaces/<slug>/github/webhook/` — **public**, HMAC (cible du webhook GitHub App).
+- `GET|POST /api/workspaces/<slug>/github/repositories/` et `DELETE .../<uuid>/` — mapping repo↔projet (admin).
+- `GET /api/workspaces/<slug>/projects/<pid>/issues/<iid>/github/pull-requests/` — lecture (consommé par le widget).
+
+**Non fait / différé (hors périmètre MVP)** : UI de réglages pour installer la GitHub App et mapper les repos depuis
+l'app (aujourd'hui le mapping se fait via l'endpoint `github/repositories/` ; et le rattachement des PR marche **même
+sans mapping** grâce au référencement `#IDENT-seq`) ; auth **sortante** GitHub App (JWT App → installation token) pour
+le futur « issues GitHub → Plane » (bidirectionnel) ; dédup replay via Redis (`X-GitHub-Delivery`) — les upsert rendent
+les rejeux sûrs en correction, mais pas contre les doublons d'activité ; `pull_request_count` annoté sur le payload
+issue (abandonné : le widget fetch et s'auto-masque, donc inutile).
+
+---
+
+## 25. Mise en production du fork Plane (handoff DevOps)
+
+> **But de cette section** : donner à l'agent qui a accompagné la mise en ligne de l'environnement Plane tout le
+> nécessaire pour **déployer cette version fork en production**. Ce fork réintègre des features payantes upstream +
+> ajoute la liaison GitHub. Les points marqués **[À VALIDER]** dépendent de votre infra (compose/k8s/CI) et sont à
+> confirmer avec l'agent DevOps ; les points marqués **[VÉRIFIÉ]** ont été testés pendant le dev.
+
+### 25.1 Ce que le fork ajoute par rapport à Plane upstream
+
+Cumul des sessions (voir sections précédentes de ce doc pour le détail) :
+
+- **Work Item Types**, **Epics**, **Custom Properties** (types de propriétés + options + valeurs, dont propriété
+  **FILE** avec upload réel) — S0→S9 + post-S9.
+- **Liaison GitHub → Plane** (PR sur les work items) — §24, cette session.
+
+Conséquence déploiement : par rapport à un Plane CE standard, il faut surtout **(a)** appliquer les **migrations DB**
+du fork, **(b)** **rebuild le frontend** depuis cette branche, **(c)** optionnellement configurer la **GitHub App**.
+
+### 25.2 Base de données — migrations
+
+- Le fork ajoute des migrations dans `apps/api/plane/db/migrations/` ; la dernière est **`0124`**
+  (`0124_githubrepositorymap_githubpullrequest`). Les migrations du fork antérieures incluent notamment `0122`
+  (`project_is_epic_enabled`), `0123` (`issueproperty_...`), puis `0124`.
+- Déploiement : lancer **`python manage.py migrate`** (comme upstream). Aucune migration destructive ; `0124` crée
+  seulement 2 tables (`github_pull_requests`, `github_repository_maps`). **[VÉRIFIÉ]** en dev (appliquée sans erreur).
+- **[À VALIDER]** l'ordre/mécanisme de migration dans votre pipeline prod (job init, hook de déploiement, etc.).
+
+### 25.3 Services & processus
+
+- **API (web)** : sert les nouveaux endpoints sous `/api/…` → **aucune règle de proxy/ingress supplémentaire** (le
+  routage `/api/` existant suffit). **[VÉRIFIÉ]** en dev via le proxy sur `:8000`.
+- **Worker Celery** : la nouvelle task `plane.bgtasks.github_webhook_task.github_webhook_task` est **auto-découverte au
+  démarrage** du worker. → **redéployer / redémarrer le service worker** pour qu'il l'enregistre (un worker déjà en
+  cours ne connaît pas la task tant qu'il n'est pas relancé). Pas de nouvelle **queue** ni de nouveau worker dédié.
+  **[VÉRIFIÉ]** : l'import de la task sous contexte Django est OK ; il restait juste à relancer le worker.
+- **Beat / autres** : rien de spécifique (pas de tâche périodique ajoutée).
+
+### 25.4 Configuration (GitHub App) — optionnel mais requis pour activer la liaison
+
+4 clés d'instance (catégorie `GITHUB`) lues via `get_configuration_value()` :
+`GITHUB_APP_ID`, `GITHUB_APP_SLUG` (non chiffrés), `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET` (chiffrés).
+
+- **`GITHUB_WEBHOOK_SECRET` est requis** pour que le récepteur fonctionne : sans lui, `POST …/github/webhook/` renvoie
+  **503** (fail-safe). Avec un secret configuré mais une signature invalide → **401** ; payload accepté → **202**.
+- Mécanisme de config Plane : `SKIP_ENV_VAR` (défaut `"1"`) fait lire les valeurs depuis la table
+  `InstanceConfiguration` (God-mode / admin d'instance) ; sinon depuis les **variables d'environnement**. **[À VALIDER]**
+  avec l'agent DevOps selon votre méthode habituelle de config d'instance (vous utilisez probablement déjà l'une des
+  deux pour SMTP, OAuth GitHub login, etc. — même canal ici). Les valeurs `*_SECRET`/`*_PRIVATE_KEY` sont chiffrées au
+  repos par la couche config (`plane.license.utils.encryption`).
+- **Création de la GitHub App** (côté GitHub, org qui contient les repos front + API) :
+  - Webhook URL = `https://<votre-domaine-plane>/api/workspaces/<slug>/github/webhook/` (le `slug` scope le secret par
+    workspace). Webhook secret = la valeur mise dans `GITHUB_WEBHOOK_SECRET`.
+  - Events à cocher : **Pull requests** et **Issue comments** (les seuls traités au MVP ; `pull_request_review`/`push`
+    sont ignorés). Permissions repo minimales correspondantes (Pull requests: Read, Issues/Contents selon besoin).
+  - Installer l'App sur l'org / les repos concernés.
+- **Mapping repo↔projet** : facultatif au MVP — le rattachement des PR marche via `#IDENT-seq` sans mapping. Le mapping
+  (`installation_id`, `repository_id`, `full_name` → projet) se crée via `POST …/github/repositories/` et servira pour
+  l'auth sortante future. Pas d'UI de réglages encore.
+
+### 25.5 Build frontend & packages
+
+- **Ordre de build important** : `@plane/types` est consommé par le web via son **build (`dist/`)**, pas la source.
+  Rebuild `@plane/types` **avant** le typecheck/build web, sinon les nouveaux types (`TGithubPullRequest`,
+  `"pull-requests"`) ne sont pas vus. Commande : `pnpm --filter @plane/types build`. **[VÉRIFIÉ]** (piège rencontré en
+  dev ; `dist/` n'est pas commité, il est rebuild au build). Un build monorepo normal (turbo) enchaîne ça tout seul si
+  l'ordre de dépendances est respecté.
+- **i18n** : `pnpm --filter @plane/i18n run generate:types` puis `sync:check` (doit être **100 %**, sinon le CI
+  `check:sync` échoue). **[VÉRIFIÉ]** 100 %.
+- **Web** : `pnpm --filter web build` (react-router build). Typecheck `check:types` = **0 erreur** en dev. **[VÉRIFIÉ]**.
+- **[À VALIDER]** l'intégration de ces étapes dans votre pipeline de build/déploiement prod (images Docker web, cache
+  turbo, etc.).
+
+### 25.6 Sécurité (points de contrôle pour la revue prod)
+
+- Le récepteur webhook est **volontairement non authentifié** (GitHub ne peut pas présenter une session Plane) et
+  protégé par **HMAC-SHA256 constant-time** sur le **body brut** (`hmac.compare_digest`). C'est le seul endpoint public
+  ajouté. Il ne fait que vérifier + enfiler (pas de traitement lourd synchrone) → surface DoS faible.
+- **Pas de surface SSRF** : c'est un récepteur pur, il ne va jamais fetch une URL issue du payload (le MVP ne fait
+  aucun appel sortant vers GitHub).
+- Secret de webhook stocké chiffré (config d'instance). Rotation = mettre à jour `GITHUB_WEBHOOK_SECRET` des deux côtés
+  (Plane + GitHub App).
+- **[À VALIDER]** exposition réseau : confirmer que `/api/workspaces/<slug>/github/webhook/` est joignable depuis
+  Internet (GitHub) sans passer par une auth mTLS/WAF qui bloquerait GitHub.
+
+### 25.7 Vérification post-déploiement (checklist)
+
+1. `manage.py migrate` OK ; tables `github_pull_requests` / `github_repository_maps` présentes.
+2. `GET /api/…/github/pull-requests/` (avec session) répond 200 `[]` sur un work item sans PR.
+3. `POST /api/workspaces/<slug>/github/webhook/` sans secret configuré → **503** ; avec secret + signature invalide →
+   **401** ; event `ping` signé → **200**.
+4. Depuis la GitHub App : ouvrir une PR de test référençant `#IDENT-1`, vérifier que la PR remonte sur le work item ;
+   la merger → l'issue passe en état `completed` ; poster un commentaire `Preview: https://…preview…` → le lien
+   « Open preview environment » apparaît.
+5. Le worker log montre bien l'exécution de `github_webhook_task` (sinon → worker pas relancé, cf. 25.3).
+
+### 25.8 Problématiques rencontrées (utiles au déploiement)
+
+- **Worker à relancer** pour enregistrer la nouvelle task Celery (sinon les webhooks sont reçus/202 mais jamais
+  traités).
+- **Secret manquant = 503** (fail-safe voulu) : bien configurer `GITHUB_WEBHOOK_SECRET`.
+- **`@plane/types` en dist** : rebuild obligatoire avant le web (cf. 25.5).
+- **Webhooks entrants injoignables en local** (dev) : tunnel ngrok/cloudflared nécessaire — **non pertinent en prod**
+  si Plane est exposé publiquement (le cas ici).
+- Rappel : le rattachement `#IDENT-seq` est **case-insensitive** sur l'identifiant ; il matche dans titre/branche/body
+  et évite les faux positifs collés à des chiffres (`123WIT-45` ignoré). Un identifiant inconnu → simplement pas de
+  rattachement (pas d'erreur).
+
+### 25.9 État git au moment du handoff
+
+Branche `feat/github-pr-integration`, **3 commits, non poussée** :
+
+- `feat(api): surface GitHub pull requests on work items via inbound webhooks`
+- `chore(i18n): add pull_requests keys across all locales`
+- `feat(web): Pull Requests widget on the work item detail panel`
+
+(Un `no-shadow` préexistant dans `root.store.ts` a été corrigé au passage — param `action` → `widget` — car le hook
+pre-commit `oxlint --deny-warnings` le bloquait dès qu'on touchait ce fichier.)
