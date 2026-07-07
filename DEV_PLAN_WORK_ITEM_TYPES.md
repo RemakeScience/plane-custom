@@ -1056,7 +1056,11 @@ Branche `feat/github-pr-integration`. Comportements livrés, tous vérifiés :
    `GithubPullRequest`).
 2. PR **mergée** (`action=closed` + `merged=true`) → l'issue passe dans l'état du groupe **`completed`** du projet
    (plus petit `sequence`), via le pipeline standard `issue_activity` → `track_state` (apparaît dans le feed d'activité).
-   Garde-fou : no-op si l'issue est déjà dans un état `completed`.
+   **Cascade récursif (2026-07-07)** : la même bascule est appliquée à **toute la descendance** (sous-items, petits-enfants…,
+   BFS cycle-safe, état cible calculé par projet de chaque nœud). Garde-fous : on ne touche pas un nœud déjà en groupe
+   `completed`/`cancelled` (pas de ré-ouverture ni d'écrasement d'un état volontaire), on ignore les enfants archivés/draft.
+   Fonctions `_move_issue_to_completed` (cascade BFS) + `_complete_single_issue` (un nœud). Test :
+   `test_merge_cascades_to_all_descendants`.
 3. Un **commentaire de PR** contenant une URL avec le mot `preview` → l'URL est stockée dans `ephemeral_env_url` et
    affichée sur le work item (event `issue_comment`).
 4. **Widget « Pull Requests »** (collapsible) sur le détail du work item : badge d'état (Open/Merged/Closed), lien PR

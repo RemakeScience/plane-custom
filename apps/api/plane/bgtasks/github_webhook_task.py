@@ -82,26 +82,28 @@ def _resolve_repository_map(repository, project):
     return GithubRepositoryMap.objects.filter(repository_id=repository_id, project=project).first()
 
 
-def _move_issue_to_completed(issue):
-    """Move an issue to the project's completed-group state (lowest sequence),
-    recording a normal 'state' activity in the feed. No-op if already completed."""
+def _complete_single_issue(issue):
+    """Move one issue to its project's completed-group state (lowest sequence) and
+    record a normal 'state' activity in the feed. Leaves issues already in a
+    completed or cancelled state untouched. Returns True if it moved the issue."""
     if issue.state_id is not None:
         current_state = State.all_state_objects.filter(pk=issue.state_id).first()
-        if current_state is not None and current_state.group == "completed":
-            return
+        # Do not re-open or overwrite an intentional done/cancelled state.
+        if current_state is not None and current_state.group in ("completed", "cancelled"):
+            return False
 
     target_state = (
         State.objects.filter(project_id=issue.project_id, group="completed").order_by("sequence").first()
     )
     if target_state is None or target_state.id == issue.state_id:
-        return
+        return False
 
     old_state_id = str(issue.state_id) if issue.state_id else None
     issue.state = target_state
     issue.save(update_fields=["state", "updated_at"])
 
-    # Drive track_state via the standard activity pipeline so the merge shows up
-    # in the work item's activity feed as a normal state change.
+    # Drive track_state via the standard activity pipeline so the change shows up
+    # in each work item's activity feed as a normal state change.
     issue_activity.delay(
         type="issue.activity.updated",
         requested_data=json.dumps({"state_id": str(target_state.id)}),
@@ -113,6 +115,29 @@ def _move_issue_to_completed(issue):
         notification=False,
         origin=None,
     )
+    return True
+
+
+def _move_issue_to_completed(issue):
+    """Move an issue AND all its descendants (sub work items, recursively) to the
+    project's completed state on PR merge — a cascade down the sub work item tree.
+    Each node's target state is computed per its own project; nodes already in a
+    completed/cancelled state are skipped. Cycle-safe via a visited set."""
+    seen = set()
+    queue = [issue]
+    while queue:
+        current = queue.pop(0)
+        if current.id in seen:
+            continue
+        seen.add(current.id)
+        _complete_single_issue(current)
+        # Cascade to direct children (excluding archived/draft); BFS handles the
+        # deeper levels. Children can live in another project → state resolved
+        # per-project inside _complete_single_issue.
+        children = Issue.objects.filter(parent_id=current.id, archived_at__isnull=True, is_draft=False).exclude(
+            id__in=seen
+        )
+        queue.extend(children)
 
 
 def _handle_pull_request(slug, payload):

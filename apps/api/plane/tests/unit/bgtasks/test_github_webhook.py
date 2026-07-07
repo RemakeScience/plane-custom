@@ -99,6 +99,33 @@ class TestPullRequestHandler:
         _handle_pull_request("ws-gh", _pr_payload("synchronize"))
         assert GithubPullRequest.objects.filter(issue=project_setup["issue"], pr_number=42).count() == 1
 
+    @patch("plane.bgtasks.github_webhook_task.issue_activity")
+    def test_merge_cascades_to_all_descendants(self, _activity, project_setup):
+        project = project_setup["project"]
+        backlog = project_setup["backlog"]
+        done = project_setup["done"]
+        parent = project_setup["issue"]  # WIT-123, referenced by the PR
+
+        cancelled = State.objects.create(
+            name="Cancelled", color="#999", group=StateGroup.CANCELLED.value, project=project
+        )
+        child_a = Issue.objects.create(name="child a", project=project, state=backlog, parent=parent)
+        child_b = Issue.objects.create(name="child b", project=project, state=backlog, parent=parent)
+        grandchild = Issue.objects.create(name="grandchild", project=project, state=backlog, parent=child_a)
+        cancelled_child = Issue.objects.create(
+            name="cancelled child", project=project, state=cancelled, parent=parent
+        )
+
+        _handle_pull_request("ws-gh", _pr_payload("closed", merged=True, state="closed"))
+
+        # parent + every descendant moved to the completed state
+        for node in (parent, child_a, child_b, grandchild):
+            node.refresh_from_db()
+            assert node.state_id == done.id, f"{node.name} should be completed"
+        # an already-cancelled child is left untouched
+        cancelled_child.refresh_from_db()
+        assert cancelled_child.state_id == cancelled.id
+
 
 @pytest.mark.unit
 class TestIssueCommentHandler:
