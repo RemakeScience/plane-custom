@@ -77,6 +77,8 @@ from .workspace import (
     WorkspaceUserPreference,
 )
 
+from .github import GithubPullRequest, GithubRepositoryMap
+
 from .favorite import UserFavorite
 
 from .issue_type import IssueType, ProjectIssueType

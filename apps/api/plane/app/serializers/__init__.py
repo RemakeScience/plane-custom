@@ -93,6 +93,7 @@ from .issue import (
     IssueDescriptionVersionDetailSerializer,
     IssueListDetailSerializer,
 )
+from .github import GithubPullRequestSerializer, GithubRepositoryMapSerializer
 
 from .module import (
     ModuleDetailSerializer,

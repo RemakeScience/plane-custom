@@ -81,6 +81,31 @@ github_config_variables = [
         "category": "GITHUB",
         "is_encrypted": False,
     },
+    # GitHub App (PR integration: PRs surfaced on work items via inbound webhooks)
+    {
+        "key": "GITHUB_APP_ID",
+        "value": os.environ.get("GITHUB_APP_ID"),
+        "category": "GITHUB",
+        "is_encrypted": False,
+    },
+    {
+        "key": "GITHUB_APP_SLUG",
+        "value": os.environ.get("GITHUB_APP_SLUG"),
+        "category": "GITHUB",
+        "is_encrypted": False,
+    },
+    {
+        "key": "GITHUB_APP_PRIVATE_KEY",
+        "value": os.environ.get("GITHUB_APP_PRIVATE_KEY"),
+        "category": "GITHUB",
+        "is_encrypted": True,
+    },
+    {
+        "key": "GITHUB_WEBHOOK_SECRET",
+        "value": os.environ.get("GITHUB_WEBHOOK_SECRET"),
+        "category": "GITHUB",
+        "is_encrypted": True,
+    },
 ]
 
 
