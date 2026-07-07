@@ -943,12 +943,20 @@ class IssueDetailSerializer(IssueSerializer):
     description_html = serializers.CharField()
     is_subscribed = serializers.BooleanField(read_only=True)
     is_intake = serializers.BooleanField(read_only=True)
+    # [FORK] work-item-types — expose whether the work item is an epic so the
+    # front-end can route type updates to the epics API instead of /issues/
+    # (the issues viewset excludes epics and would 404).
+    is_epic = serializers.SerializerMethodField()
+
+    def get_is_epic(self, obj):
+        return bool(getattr(obj, "type", None) and obj.type.is_epic)
 
     class Meta(IssueSerializer.Meta):
         fields = IssueSerializer.Meta.fields + [
             "description_html",
             "is_subscribed",
             "is_intake",
+            "is_epic",
         ]
         read_only_fields = fields
 
