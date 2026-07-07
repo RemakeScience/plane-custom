@@ -907,6 +907,11 @@ n'avaient pas été mis à jour quand le fork a introduit les epics (exclus de `
   désormais **n'importe quel work item régulier** en enfant.
 - **Vérif live** : `/search-issues/?sub_issue=true&issue_id=<epic>` → 200 (candidats réguliers) ;
   `POST epics|issues/<epic>/sub-issues/` → 200 (l'enfant est bien rattaché).
+- **Sens inverse (epic comme PARENT d'un work item)** : le picker de parent (`parent=true` dans `/search-issues/`)
+  utilisait `Issue.issue_objects` comme base de candidats → les epics n'apparaissaient jamais. Fix : pour `parent=true`,
+  utiliser `Issue.objects` (inclut les epics) en ré-appliquant les exclusions du manager (triage/archived/draft). Les
+  autres modes (`sub_issue`, relation…) gardent `issue_objects`. Vérifié live : le picker de parent d'un work item
+  liste désormais les epics, et `PATCH parent_id=<epic>` → 204.
 - **⚠️ Pattern systémique à surveiller** : partout où le code fait `Issue.issue_objects.filter(pk=...)` /
   `.get(pk=...)` sur un id qui **peut être un epic** (parent/self/target), il faut `Issue.objects`. Audit rapide :
   `grep -rn "issue_objects\.\(filter\|get\)(pk=" apps/api` puis vérifier si la cible peut être un epic.

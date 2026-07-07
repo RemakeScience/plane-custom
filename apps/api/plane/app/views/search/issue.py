@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 # Module imports
 from .base import BaseAPIView
-from plane.db.models import Issue, ProjectMember, IssueRelation
+from plane.db.models import Issue, ProjectMember, IssueRelation, StateGroup
 from plane.utils.issue_search import search_issues
 
 
@@ -113,12 +113,26 @@ class IssueSearchEndpoint(BaseAPIView):
         target_date = request.query_params.get("target_date", True)
         issue_id = request.query_params.get("issue_id", False)
 
-        issues = Issue.issue_objects.filter(
+        base_filters = dict(
             workspace__slug=slug,
             project__project_projectmember__member=self.request.user,
             project__project_projectmember__is_active=True,
             project__archived_at__isnull=True,
         )
+        # [FORK] work-item-types — the parent picker may parent a work item to an
+        # epic, so epics must appear as parent candidates. Issue.issue_objects
+        # excludes epics; use Issue.objects (includes them) for parent="true" and
+        # re-apply the manager's triage/archived/draft exclusions. Other search
+        # modes (sub_issue, relation, …) keep issue_objects (epics excluded).
+        if parent == "true":
+            issues = (
+                Issue.objects.filter(**base_filters)
+                .exclude(state__group=StateGroup.TRIAGE.value)
+                .exclude(archived_at__isnull=False)
+                .exclude(is_draft=True)
+            )
+        else:
+            issues = Issue.issue_objects.filter(**base_filters)
 
         if workspace_search == "false":
             issues = self.filter_issues_by_project(project_id, issues)
