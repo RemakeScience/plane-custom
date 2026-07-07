@@ -33,6 +33,7 @@ export interface IssuesModalProps {
   templateId?: string;
   allowedProjectIds?: string[];
   showActionItemsOnUpdate?: boolean;
+  // [FORK] work-item-types
   /**
    * When true, keep the EPIC store type instead of falling back to the project
    * store. Used by the dedicated epic modal so creation hits the `/epics/` API

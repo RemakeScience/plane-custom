@@ -10,6 +10,7 @@ import type { IIssueRootStore } from "@/store/issue/root.store";
 
 export type IProjectEpicsFilter = IProjectIssuesFilter;
 
+// [FORK] work-item-types
 /**
  * Filter store for project epics. Epics reuse the project issue filters (layout,
  * display filters and properties are persisted per project via ProjectService).

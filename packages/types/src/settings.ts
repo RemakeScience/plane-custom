@@ -30,6 +30,7 @@ export type TProjectSettingsTabs =
   | "states"
   | "labels"
   | "estimates"
+  // [FORK] work-item-types
   | "work_item_types"
   | "automations";
 export type TProjectSettingsItem = {

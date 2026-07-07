@@ -98,6 +98,7 @@ class IssueManager(SoftDeletionManager):
             .exclude(archived_at__isnull=False)
             .exclude(project__archived_at__isnull=False)
             .exclude(is_draft=True)
+            # [FORK] work-item-types
             # Epics are issues with an epic type; they must never leak into the
             # regular work item lists. Using an explicit OR (instead of
             # `.exclude(type__is_epic=True)`) keeps issues with no type, because
@@ -190,6 +191,7 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
     )
 
     issue_objects = IssueManager()
+    # [FORK] work-item-types
     epic_objects = EpicManager()
 
     class Meta:

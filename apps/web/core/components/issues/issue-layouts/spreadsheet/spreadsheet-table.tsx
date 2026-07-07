@@ -112,6 +112,7 @@ export const SpreadsheetTable = observer(function SpreadsheetTable(props: Props)
 
   return (
     <table className="w-full overflow-y-auto bg-surface-1" onKeyDown={handleKeyBoardNavigation}>
+      {/* [FORK] work-item-types — issueIds prop */}
       <SpreadsheetHeader
         displayProperties={displayProperties}
         displayFilters={displayFilters}

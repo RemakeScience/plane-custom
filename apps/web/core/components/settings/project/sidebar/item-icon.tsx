@@ -5,6 +5,7 @@
  */
 
 import type { LucideIcon } from "lucide-react";
+// [FORK] work-item-types
 import { ListTodo, Users, Zap } from "lucide-react";
 // plane imports
 import type { ISvgIcons } from "@plane/propel/icons";
@@ -33,6 +34,7 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   states: StatePropertyIcon,
   labels: LabelPropertyIcon,
   estimates: EstimatePropertyIcon,
+  // [FORK] work-item-types
   work_item_types: ListTodo,
   automations: Zap,
 };

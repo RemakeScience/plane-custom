@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// [FORK] work-item-types
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isEqual, cloneDeep } from "lodash-es";
 import { observer } from "mobx-react";
@@ -20,6 +21,7 @@ import { useCycle } from "@/hooks/store/use-cycle";
 import { useLabel } from "@/hooks/store/use-label";
 import { useMember } from "@/hooks/store/use-member";
 import { useModule } from "@/hooks/store/use-module";
+// [FORK] work-item-types
 import { useIssueTypes } from "@/hooks/store/use-issue-types";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -55,6 +57,7 @@ export const ProjectLevelWorkItemFiltersHOC = observer(function ProjectLevelWork
   } = useMember();
   const { getProjectModuleIds } = useModule();
   const { getProjectStateIds } = useProjectState();
+  // [FORK] work-item-types
   const { getProjectIssueTypeIds, fetchProjectIssueTypes, isIssueTypeEnabledForProject } = useIssueTypes();
   // derived values
   const hasProjectMemberLevelPermissions = allowPermissions(
@@ -64,6 +67,7 @@ export const ProjectLevelWorkItemFiltersHOC = observer(function ProjectLevelWork
     projectId
   );
   const projectDetails = getProjectById(projectId);
+  // [FORK] work-item-types
   // Ensure the project's work item types are loaded so the "Work item type"
   // filter config becomes available (mirrors the state/label filters, whose
   // options are pre-fetched at the project level).

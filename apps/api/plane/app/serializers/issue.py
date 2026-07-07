@@ -42,6 +42,7 @@ from plane.db.models import (
     IssueDescriptionVersion,
     ProjectMember,
     EstimatePoint,
+    # [FORK] work-item-types
     IssueType,
 )
 from plane.utils.content_validator import (
@@ -88,6 +89,7 @@ class IssueCreateSerializer(BaseSerializer):
     parent_id = serializers.PrimaryKeyRelatedField(
         source="parent", queryset=Issue.objects.all(), required=False, allow_null=True
     )
+    # [FORK] work-item-types
     type_id = serializers.PrimaryKeyRelatedField(
         source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
@@ -800,6 +802,7 @@ class IssueSerializer(DynamicBaseSerializer):
             "sequence_id",
             "project_id",
             "parent_id",
+            # [FORK] work-item-types
             "type_id",
             "cycle_id",
             "module_ids",

@@ -31,6 +31,7 @@ export * from "./integration";
 export * from "./issues";
 export * from "./issues/base"; // TODO: Remove this after development and the refactor/mobx-store-issue branch is stable
 export * from "./issues/issue-identifier";
+// [FORK] work-item-types
 export * from "./issues/issue-type";
 export * from "./issues/issue-property";
 export * from "./issues/issue-property-values";

@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// [FORK] work-item-types — property value types rewritten for custom properties
 /**
  * A single custom property value. Scalars: text/url/email/file as strings,
  * decimals as strings, datetimes as ISO strings, options/relations as ids,

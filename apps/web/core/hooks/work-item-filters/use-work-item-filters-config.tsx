@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useMemo } from "react";
+// [FORK] work-item-types
 import { AtSign, Briefcase, Layers } from "lucide-react";
 // plane imports
 import { Logo } from "@plane/propel/emoji-icon-picker";
@@ -31,6 +32,7 @@ import type {
   IIssueLabel,
   IModule,
   IProject,
+  // [FORK] work-item-types
   TIssueType,
   TWorkItemFilterProperty,
 } from "@plane/types";
@@ -52,11 +54,13 @@ import {
   getSubscriberFilterConfig,
   getTargetDateFilterConfig,
   getUpdatedAtFilterConfig,
+  // [FORK] work-item-types
   getWorkItemTypeFilterConfig,
   isLoaderReady,
 } from "@plane/utils";
 // store hooks
 import { useCycle } from "@/hooks/store/use-cycle";
+// [FORK] work-item-types
 import { useIssueTypes } from "@/hooks/store/use-issue-types";
 import { useLabel } from "@/hooks/store/use-label";
 import { useMember } from "@/hooks/store/use-member";
@@ -75,6 +79,7 @@ export type TWorkItemFiltersEntityProps = {
   projectId?: string;
   projectIds?: string[];
   stateIds?: string[];
+  // [FORK] work-item-types
   issueTypeIds?: string[];
 };
 
@@ -93,6 +98,7 @@ export type TWorkItemFiltersConfig = {
 };
 
 export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps): TWorkItemFiltersConfig => {
+  // [FORK] work-item-types
   const {
     allowedFilters,
     cycleIds,
@@ -112,6 +118,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const { getModuleById } = useModule();
   const { getStateById } = useProjectState();
   const { getUserDetails } = useMember();
+  // [FORK] work-item-types
   const { getIssueTypeById } = useIssueTypes();
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
@@ -129,6 +136,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       stateIds ? (stateIds.map((stateId) => getStateById(stateId)).filter((state) => state) as IState[]) : undefined,
     [stateIds, getStateById]
   );
+  // [FORK] work-item-types
   const workItemTypes: TIssueType[] | undefined = useMemo(
     () =>
       issueTypeIds
@@ -194,6 +202,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [isFilterEnabled, workItemStates, operatorConfigs]
   );
 
+  // [FORK] work-item-types
   // work item type filter config
   const workItemTypeFilterConfig = useMemo(
     () =>
@@ -404,6 +413,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     configs: [
       stateFilterConfig,
       stateGroupFilterConfig,
+      // [FORK] work-item-types
       workItemTypeFilterConfig,
       assigneeFilterConfig,
       priorityFilterConfig,
@@ -423,6 +433,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       project_id: projectFilterConfig,
       state_group: stateGroupFilterConfig,
       state_id: stateFilterConfig,
+      // [FORK] work-item-types
       issue_type: workItemTypeFilterConfig,
       label_id: labelFilterConfig,
       cycle_id: cycleFilterConfig,

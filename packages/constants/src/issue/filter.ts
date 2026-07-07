@@ -208,6 +208,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       "priority",
       "state_group",
       "state_id",
+      // [FORK] work-item-types
       "issue_type",
       "cycle_id",
       "module_id",
@@ -298,6 +299,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
 
 export const ISSUE_STORE_TO_FILTERS_MAP: Partial<Record<EIssuesStoreType, TFilterPropertiesByPageType>> = {
   [EIssuesStoreType.PROJECT]: ISSUE_DISPLAY_FILTERS_BY_PAGE.issues,
+  // [FORK] work-item-types
   // Epics reuse the project work item filter configuration.
   [EIssuesStoreType.EPIC]: ISSUE_DISPLAY_FILTERS_BY_PAGE.issues,
 };
@@ -352,6 +354,7 @@ export const defaultActivityFilters: TActivityFilters[] = [
   EActivityFilterType.ASSIGNEE,
 ];
 
+// [FORK] work-item-types
 export const filterActivityOnSelectedFilters = (
   activity: TIssueActivityComment[],
   filters: TActivityFilters[]

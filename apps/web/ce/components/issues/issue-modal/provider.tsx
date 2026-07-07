@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// [FORK] work-item-types
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 // plane imports
@@ -36,6 +37,7 @@ export const IssueModalProvider = observer(function IssueModalProvider(props: TI
   const { children, allowedProjectIds } = props;
   // states
   const [selectedParentIssue, setSelectedParentIssue] = useState<ISearchIssueResponse | null>(null);
+  // [FORK] work-item-types
   const [issuePropertyValues, setIssuePropertyValues] = useState<TIssuePropertyValues>({});
   const [issuePropertyValueErrors, setIssuePropertyValueErrors] = useState<TIssuePropertyValueErrors>({});
   // keep a ref of the latest values so the imperative handlers never read stale state
@@ -43,11 +45,13 @@ export const IssueModalProvider = observer(function IssueModalProvider(props: TI
   issuePropertyValuesRef.current = issuePropertyValues;
   // store hooks
   const { projectsWithCreatePermissions } = useUser();
+  // [FORK] work-item-types
   const { getProjectDefaultIssueTypeId } = useIssueTypes();
   const { fetchProjectProperties, getTypeProperties } = useIssueProperties();
   // derived values
   const projectIdsWithCreatePermissions = Object.keys(projectsWithCreatePermissions ?? {});
 
+  // [FORK] work-item-types
   const getActiveAdditionalPropertiesLength = useCallback(
     ({ projectId, watch }: TActiveAdditionalPropertiesProps) => {
       const typeId = watch("type_id");

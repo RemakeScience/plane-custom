@@ -36,6 +36,7 @@ import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/iss
 // local components
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { isIssueNew } from "../utils";
+// [FORK] work-item-types
 import { SpreadsheetCustomPropertyValueCells } from "./custom-property-columns";
 import { IssueColumn } from "./issue-column";
 
@@ -399,6 +400,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
           isEstimateEnabled={isEstimateEnabled}
         />
       ))}
+      {/* [FORK] work-item-types */}
       {/* Custom property columns (project-level work item types) */}
       <SpreadsheetCustomPropertyValueCells issueId={issueDetail.id} disabled={disableUserActions} />
     </>

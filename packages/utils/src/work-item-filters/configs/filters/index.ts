@@ -12,4 +12,5 @@ export * from "./priority";
 export * from "./project";
 export * from "./state";
 export * from "./user";
+// [FORK] work-item-types
 export * from "./work-item-type";

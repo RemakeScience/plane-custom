@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// [FORK] work-item-types
 import { observer } from "mobx-react";
 // plane imports
 import { EUserPermissions } from "@plane/constants";
@@ -19,6 +20,7 @@ type TProjectItemsRootProps = {
   projectId: string;
 };
 
+// [FORK] work-item-types
 export const ProjectNavigationRoot = observer(function ProjectNavigationRoot(props: TProjectItemsRootProps) {
   const { workspaceSlug, projectId } = props;
   // store hooks

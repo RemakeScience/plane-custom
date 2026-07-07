@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// [FORK] work-item-types
 import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -16,20 +17,24 @@ import { useIssueTypes } from "@/hooks/store/use-issue-types";
 import { useProject } from "@/hooks/store/use-project";
 import { IdentifierText } from "@/components/issues/issue-detail/identifier-text";
 
+// [FORK] work-item-types
 const ICON_SIZE: Record<string, number> = { sm: 12, md: 14, lg: 16 };
 
 export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueIdentifierProps) {
   const { projectId, variant, size, displayProperties, enableClickToCopyIdentifier = false } = props;
+  // [FORK] work-item-types
   // router
   const { workspaceSlug: routeWorkspaceSlug } = useParams();
   const workspaceSlug = routeWorkspaceSlug?.toString() ?? "";
   // store hooks
   const { getProjectIdentifierById } = useProject();
+  // [FORK] work-item-types
   const { fetchProjectIssueTypes, getProjectIssueTypeIds, isIssueTypeEnabledForProject } = useIssueTypes();
   const {
     issue: { getIssueById },
   } = useIssueDetail();
 
+  // [FORK] work-item-types
   // Lazily load the project's work item types the first time an identifier renders
   // for the project (the `fetchedMap` guard keeps this to a single request).
   const isIssueTypeEnabled = isIssueTypeEnabledForProject(projectId);
@@ -45,6 +50,7 @@ export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueId
   const issue = isUsingStoreData ? getIssueById(props.issueId) : null;
   const projectIdentifier = isUsingStoreData ? getProjectIdentifierById(projectId) : props.projectIdentifier;
   const issueSequenceId = isUsingStoreData ? issue?.sequence_id : props.issueSequenceId;
+  // [FORK] work-item-types
   const issueTypeId = isUsingStoreData ? issue?.type_id : props.issueTypeId;
   const shouldRenderIssueID = displayProperties ? displayProperties.key : true;
   const shouldRenderIssueTypeIcon = displayProperties ? displayProperties.issue_type : true;
@@ -53,6 +59,7 @@ export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueId
 
   return (
     <div className="flex shrink-0 items-center space-x-2">
+      {/* [FORK] work-item-types */}
       {shouldRenderIssueTypeIcon && issueTypeId && <IssueTypeIdentifier issueTypeId={issueTypeId} size={size} />}
       {shouldRenderIssueID && (
         <IdentifierText
@@ -66,6 +73,7 @@ export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueId
   );
 });
 
+// [FORK] work-item-types
 export const IssueTypeIdentifier = observer(function IssueTypeIdentifier(props: TIssueTypeIdentifier) {
   const { issueTypeId, size = "md" } = props;
   // store hooks

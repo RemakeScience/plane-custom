@@ -107,6 +107,7 @@ export const WORK_ITEM_FILTER_PROPERTY_KEYS = [
   "cycle_id",
   "module_id",
   "project_id",
+  // [FORK] work-item-types
   "issue_type",
   "created_at",
   "updated_at",

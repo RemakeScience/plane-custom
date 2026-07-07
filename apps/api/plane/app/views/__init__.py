@@ -84,6 +84,7 @@ from .workspace.quick_link import QuickLinkViewSet
 from .workspace.sticky import WorkspaceStickyViewSet
 
 from .state.base import StateViewSet, IntakeStateEndpoint
+# [FORK] work-item-types
 from .issue_type.base import IssueTypeViewSet, DefaultIssueTypeEndpoint, DefaultEpicTypeEndpoint
 from .issue_property.base import (
     IssuePropertyViewSet,
@@ -136,6 +137,7 @@ from .issue.base import (
     IssueDetailIdentifierEndpoint,
 )
 
+# [FORK] work-item-types
 from .issue.epic import EpicViewSet, EpicPaginatedViewSet
 
 from .issue.activity import IssueActivityEndpoint

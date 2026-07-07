@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// [FORK] work-item-types
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import Script from "next/script";
@@ -134,6 +135,7 @@ export default function Root() {
 }
 
 export function HydrateFallback() {
+  // [FORK] work-item-types
   // Render identical markup on the prerendered document and the first client
   // paint (an empty div), then reveal the themed spinner only after mount. A
   // theme-dependent first render here mismatches the prerendered fallback and

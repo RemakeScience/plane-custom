@@ -33,6 +33,7 @@ export enum EIssueGroupByToServerOptions {
   "cycle" = "cycle_id",
   "module" = "issue_module__module_id",
   "target_date" = "target_date",
+  // [FORK] work-item-types
   // `project` and `team_project` intentionally share the same backing column.
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   "project" = "project_id",
@@ -210,6 +211,7 @@ export const ISSUE_DISPLAY_PROPERTIES: {
   },
   { key: "modules", titleTranslationKey: "common.module" },
   { key: "cycle", titleTranslationKey: "common.cycle" },
+  // [FORK] work-item-types
   { key: "issue_type", titleTranslationKey: "work_item_types.label" },
 ];
 

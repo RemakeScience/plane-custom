@@ -15,6 +15,7 @@ import { cn } from "@plane/utils";
 import { MultipleSelectGroupAction } from "@/components/core/multiple-select";
 // hooks
 import type { TSelectionHelper } from "@/hooks/use-multiple-select";
+// [FORK] work-item-types
 import { SpreadsheetCustomPropertyHeaders } from "./custom-property-columns";
 import { SpreadsheetHeaderColumn } from "./spreadsheet-header-column";
 
@@ -26,6 +27,7 @@ interface Props {
   isEstimateEnabled: boolean;
   spreadsheetColumnsList: (keyof IIssueDisplayProperties)[];
   selectionHelpers: TSelectionHelper;
+  // [FORK] work-item-types
   issueIds?: string[];
   isEpic?: boolean;
 }
@@ -39,6 +41,7 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
     isEstimateEnabled,
     spreadsheetColumnsList,
     selectionHelpers,
+    // [FORK] work-item-types
     issueIds,
     isEpic = false,
   } = props;
@@ -90,6 +93,7 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
             isEpic={isEpic}
           />
         ))}
+        {/* [FORK] work-item-types */}
         <SpreadsheetCustomPropertyHeaders issueIds={issueIds} />
       </tr>
     </thead>

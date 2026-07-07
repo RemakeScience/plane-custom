@@ -154,6 +154,7 @@ class IssueFilterSet(BaseFilterSet):
     project_id = filters.UUIDFilter(field_name="project_id")
     project_id__in = UUIDInFilter(field_name="project_id", lookup_expr="in")
 
+    # [FORK] work-item-types
     # Work item type (Issue.type FK). Exposed under the `issue_type` rich-filter
     # key so the main filter bar can narrow work items by their type.
     issue_type = filters.UUIDFilter(field_name="type_id")

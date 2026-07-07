@@ -405,6 +405,7 @@ class IssueViewSet(BaseViewSet):
         if serializer.is_valid():
             serializer.save()
 
+            # [FORK] work-item-types
             # Persist custom property values: apply each property's declared
             # default for the issue's type, then override with any values sent
             # inline under "property_values". Best-effort — never blocks the
@@ -469,6 +470,7 @@ class IssueViewSet(BaseViewSet):
                     "is_draft",
                     "archived_at",
                     "deleted_at",
+                    # [FORK] work-item-types
                     "type_id",
                 )
                 .first()

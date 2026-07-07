@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// [FORK] work-item-types
 import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -27,6 +28,7 @@ export type TIssueTypeSwitcherProps = {
 };
 
 export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIssueTypeSwitcherProps) {
+  // [FORK] work-item-types
   const { issueId, disabled } = props;
   // router
   const { workspaceSlug: routeWorkspaceSlug } = useParams();
@@ -34,8 +36,10 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
   // store hooks
   const {
     issue: { getIssueById },
+    // [FORK] work-item-types
     updateIssue,
   } = useIssueDetail();
+  // [FORK] work-item-types
   const { getProjectIdentifierById } = useProject();
   const {
     fetchProjectIssueTypes,
@@ -46,6 +50,7 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
   } = useIssueTypes();
   // derived values
   const issue = getIssueById(issueId);
+  // [FORK] work-item-types
   const projectId = issue?.project_id ?? null;
   const isEnabled = isIssueTypeEnabledForProject(projectId);
   const hasFetched = getProjectIssueTypeIds(projectId) !== undefined;

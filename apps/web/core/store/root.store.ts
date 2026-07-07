@@ -19,6 +19,7 @@ import type { IPowerKStore } from "@/plane-web/store/power-k.store";
 import type { RootStore } from "@/plane-web/store/root.store";
 import type { IStateStore } from "@/plane-web/store/state.store";
 import { StateStore } from "@/plane-web/store/state.store";
+// [FORK] work-item-types
 import type { IIssueTypesStore } from "@/plane-web/store/issue-types.store";
 import { IssueTypesStore } from "@/plane-web/store/issue-types.store";
 import type { IIssuePropertiesStore } from "@/plane-web/store/issue-properties.store";
@@ -87,6 +88,7 @@ export class CoreRootStore {
   globalView: IGlobalViewStore;
   issue: IIssueRootStore;
   state: IStateStore;
+  // [FORK] work-item-types
   issueTypes: IIssueTypesStore;
   issueProperties: IIssuePropertiesStore;
   label: ILabelStore;
@@ -125,6 +127,7 @@ export class CoreRootStore {
     this.globalView = new GlobalViewStore(this);
     this.issue = new IssueRootStore(this as unknown as RootStore);
     this.state = new StateStore(this as unknown as RootStore);
+    // [FORK] work-item-types
     this.issueTypes = new IssueTypesStore(this as unknown as RootStore);
     this.issueProperties = new IssuePropertiesStore(this as unknown as RootStore);
     this.label = new LabelStore(this);
@@ -161,6 +164,7 @@ export class CoreRootStore {
     this.globalView = new GlobalViewStore(this);
     this.issue = new IssueRootStore(this as unknown as RootStore);
     this.state = new StateStore(this as unknown as RootStore);
+    // [FORK] work-item-types
     this.issueTypes = new IssueTypesStore(this as unknown as RootStore);
     this.issueProperties = new IssuePropertiesStore(this as unknown as RootStore);
     this.label = new LabelStore(this);

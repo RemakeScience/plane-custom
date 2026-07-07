@@ -540,6 +540,7 @@ class ProjectAssetEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # [FORK] work-item-types
         # Check if the file type is allowed. FILE custom property values accept
         # the broad attachment set (PDF/Office/text/...); everything else stays
         # image-only.

@@ -6,9 +6,11 @@
 
 import { action, makeObservable, runInAction } from "mobx";
 // types
+// [FORK] work-item-types
 import { EIssueServiceType } from "@plane/types";
 import type {
   TIssue,
+  // [FORK] work-item-types
   TIssueServiceType,
   TLoader,
   ViewFlags,
@@ -65,6 +67,7 @@ export class ProjectIssues extends BaseIssuesStore implements IProjectIssues {
   // filter store
   issueFilterStore: IProjectIssuesFilter;
 
+  // [FORK] work-item-types
   constructor(
     _rootStore: IIssueRootStore,
     issueFilterStore: IProjectIssuesFilter,
@@ -89,6 +92,7 @@ export class ProjectIssues extends BaseIssuesStore implements IProjectIssues {
    * @param projectId
    */
   fetchParentStats = async (workspaceSlug: string, projectId?: string) => {
+    // [FORK] work-item-types
     if (projectId) this.rootIssueStore.rootStore.projectRoot.project.fetchProjectDetails(workspaceSlug, projectId);
   };
 

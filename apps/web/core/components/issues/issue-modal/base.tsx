@@ -49,11 +49,13 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     primaryButtonText,
     isProjectSelectionDisabled = false,
     showActionItemsOnUpdate = false,
+    // [FORK] work-item-types
     isEpicModal = false,
   } = props;
   const issueStoreType = useIssueStoreType();
 
   let storeType = issueStoreFromProps ?? issueStoreType;
+  // [FORK] work-item-types
   // Fallback to project store if epic store is used in the generic issue modal.
   // The dedicated epic modal opts out (isEpicModal) so creation routes through
   // the EPIC store to the `/epics/` API, which forces the epic type.
@@ -71,6 +73,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   // store hooks
   const { t } = useTranslation();
+  // [FORK] work-item-types
   const {
     workspaceSlug,
     projectId: routerProjectId,
@@ -181,6 +184,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       // if cycle id in payload does not match the cycleId in url
       // or if the moduleIds in Payload does not match the moduleId in url
       // use the project issue store to create issues
+      // [FORK] work-item-types
       else if (
         (payload.cycle_id !== routerCycleId && storeType === EIssuesStoreType.CYCLE) ||
         (!payload.module_ids?.includes(routerModuleId?.toString()) && storeType === EIssuesStoreType.MODULE)
@@ -208,6 +212,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
 
       // check if we should add issue to cycle/module
       if (!is_draft_issue) {
+        // [FORK] work-item-types
         if (
           payload.cycle_id &&
           payload.cycle_id !== "" &&
@@ -215,6 +220,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
         ) {
           await addIssueToCycle(response, payload.cycle_id);
         }
+        // [FORK] work-item-types
         if (
           payload.module_ids &&
           payload.module_ids.length > 0 &&
@@ -269,6 +275,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     }
   };
 
+  // [FORK] work-item-types
   const handleCycleChange = async (issueData: Partial<TIssue> | undefined, payload: Partial<TIssue>) => {
     if (!workspaceSlug || !issueData?.project_id || !issueData?.id) return;
     // return if user is not trying to change the cycle, i.e
@@ -298,6 +305,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     }
   };
 
+  // [FORK] work-item-types
   const handleModuleChange = async (issueData: Partial<TIssue>, payload: Partial<TIssue>) => {
     if (!workspaceSlug || !issueData?.project_id || !issueData?.id) return;
     // return if user is not trying to change the module, i.e
@@ -407,6 +415,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     data: {
       ...data,
       description_html: description,
+      // [FORK] work-item-types
       cycle_id: data?.cycle_id ? data?.cycle_id : routerCycleId ? routerCycleId.toString() : null,
       module_ids: data?.module_ids ? data?.module_ids : routerModuleId ? [routerModuleId.toString()] : null,
     },

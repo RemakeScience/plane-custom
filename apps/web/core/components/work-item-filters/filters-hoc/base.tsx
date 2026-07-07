@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// [FORK] work-item-types
 import { useEffect, useMemo, useState } from "react";
 import { observer } from "mobx-react";
 import { v4 as uuidv4 } from "uuid";
@@ -43,6 +44,7 @@ export const WorkItemFiltersHOC = observer(function WorkItemFiltersHOC(props: TW
 type TWorkItemFilterProps = TSharedWorkItemFiltersProps &
   TAdditionalWorkItemFiltersProps & {
     initialWorkItemFilters: IIssueFilters;
+    // [FORK] work-item-types
     children: React.ReactNode | ((props: { filter: IWorkItemFilterInstance | undefined }) => React.ReactNode);
   };
 
@@ -73,6 +75,7 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
     allowedFilters: filtersToShowByLayout ? filtersToShowByLayout : [],
     ...entityConfigProps,
   });
+  // [FORK] work-item-types
   // Get or create the filter instance inside an effect (commit phase) so that
   // registration and the unmount deletion are symmetric. Doing this in render
   // (useMemo) desynced with the commit-phase cleanup under StrictMode's
@@ -102,6 +105,7 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
     [entityType, workItemEntityID, saveViewOptions, updateViewOptions, updateFilters, deleteFilter]
   );
 
+  // [FORK] work-item-types
   useEffect(() => {
     if (!workItemLayoutFilter) return;
     workItemLayoutFilter.configManager.setAreConfigsReady(workItemFiltersConfig.areAllConfigsInitialized);

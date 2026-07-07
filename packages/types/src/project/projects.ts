@@ -30,6 +30,7 @@ export interface IPartialProject {
   module_view: boolean;
   page_view: boolean;
   inbox_view: boolean;
+  // [FORK] work-item-types
   is_issue_type_enabled?: boolean;
   is_epic_enabled?: boolean;
   guest_view_all_features?: boolean;

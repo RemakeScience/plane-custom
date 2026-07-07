@@ -159,6 +159,7 @@ def filter_labels(params, issue_filter, method, prefix=""):
     return issue_filter
 
 
+# [FORK] work-item-types
 def filter_issue_type(params, issue_filter, method, prefix=""):
     if method == "GET":
         issue_types = [item for item in params.get("issue_type").split(",") if item != "null"]
@@ -460,6 +461,7 @@ def issue_filters(query_params, method, prefix=""):
         "target_date": filter_target_date,
         "completed_at": filter_completed_at,
         "type": filter_issue_state_type,
+        # [FORK] work-item-types
         "issue_type": filter_issue_type,
         "project": filter_project,
         "cycle": filter_cycle,

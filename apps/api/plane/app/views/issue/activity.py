@@ -63,6 +63,7 @@ class IssueActivityEndpoint(BaseAPIView):
             )
         )
 
+        # [FORK] work-item-types
         # Epics reuse this endpoint but pass the "epic-*" activity types.
         if request.GET.get("activity_type", None) in ("issue-property", "epic-property"):
             issue_activities = issue_activities.prefetch_related(
@@ -75,10 +76,12 @@ class IssueActivityEndpoint(BaseAPIView):
             issue_activities = IssueActivitySerializer(issue_activities, many=True).data
             return Response(issue_activities, status=status.HTTP_200_OK)
 
+        # [FORK] work-item-types
         if request.GET.get("activity_type", None) in ("issue-comment", "epic-comment"):
             issue_comments = IssueCommentSerializer(issue_comments, many=True).data
             return Response(issue_comments, status=status.HTTP_200_OK)
 
+        # [FORK] work-item-types
         # Serialize both before merging: sorting raw model instances by
         # `instance["created_at"]` fails ("not subscriptable"). This path is hit
         # when no activity_type is passed (e.g. the epic detail activity fetch).
