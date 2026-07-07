@@ -29,6 +29,9 @@
           "option_add_error": "Nu s-a putut adăuga opțiunea.",
           "create_error": "Nu s-a putut crea proprietatea.",
           "file_placeholder": "https://…",
+          "file_upload": "Încarcă fișierul",
+          "file_uploading": "Se încarcă…",
+          "file_upload_error": "Nu s-a putut încărca fișierul.",
           "type": {
             "text": "Text",
             "number": "Număr",

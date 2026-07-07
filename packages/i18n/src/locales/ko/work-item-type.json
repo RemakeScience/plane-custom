@@ -29,6 +29,9 @@
           "option_add_error": "옵션을 추가할 수 없습니다.",
           "create_error": "프로퍼티를 만들 수 없습니다.",
           "file_placeholder": "https://…",
+          "file_upload": "파일 업로드",
+          "file_uploading": "업로드 중…",
+          "file_upload_error": "파일을 업로드할 수 없습니다.",
           "type": {
             "text": "텍스트",
             "number": "숫자",

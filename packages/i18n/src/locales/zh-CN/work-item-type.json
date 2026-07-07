@@ -29,6 +29,9 @@
           "option_add_error": "无法添加该选项。",
           "create_error": "无法创建该属性。",
           "file_placeholder": "https://…",
+          "file_upload": "上传文件",
+          "file_uploading": "上传中…",
+          "file_upload_error": "无法上传该文件。",
           "type": {
             "text": "文本",
             "number": "数字",

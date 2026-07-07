@@ -29,6 +29,9 @@
           "option_add_error": "Nepodarilo sa pridať možnosť.",
           "create_error": "Nepodarilo sa vytvoriť vlastnosť.",
           "file_placeholder": "https://…",
+          "file_upload": "Nahrať súbor",
+          "file_uploading": "Nahrávanie…",
+          "file_upload_error": "Nepodarilo sa nahrať súbor.",
           "type": {
             "text": "Text",
             "number": "Číslo",

@@ -29,6 +29,9 @@
           "option_add_error": "Không thể thêm tùy chọn.",
           "create_error": "Không thể tạo thuộc tính.",
           "file_placeholder": "https://…",
+          "file_upload": "Tải tệp lên",
+          "file_uploading": "Đang tải lên…",
+          "file_upload_error": "Không thể tải tệp lên.",
           "type": {
             "text": "Văn bản",
             "number": "Số",

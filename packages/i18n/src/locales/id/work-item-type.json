@@ -29,6 +29,9 @@
           "option_add_error": "Tidak dapat menambahkan opsi.",
           "create_error": "Tidak dapat membuat properti.",
           "file_placeholder": "https://…",
+          "file_upload": "Unggah file",
+          "file_uploading": "Mengunggah…",
+          "file_upload_error": "Tidak dapat mengunggah file.",
           "type": {
             "text": "Teks",
             "number": "Angka",

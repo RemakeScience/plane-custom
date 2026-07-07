@@ -29,6 +29,9 @@
           "option_add_error": "Не вдалося додати варіант.",
           "create_error": "Не вдалося створити властивість.",
           "file_placeholder": "https://…",
+          "file_upload": "Завантажити файл",
+          "file_uploading": "Завантаження…",
+          "file_upload_error": "Не вдалося завантажити файл.",
           "type": {
             "text": "Текст",
             "number": "Число",

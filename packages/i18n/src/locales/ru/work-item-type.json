@@ -29,6 +29,9 @@
           "option_add_error": "Не удалось добавить вариант.",
           "create_error": "Не удалось создать свойство.",
           "file_placeholder": "https://…",
+          "file_upload": "Загрузить файл",
+          "file_uploading": "Загрузка…",
+          "file_upload_error": "Не удалось загрузить файл.",
           "type": {
             "text": "Текст",
             "number": "Число",

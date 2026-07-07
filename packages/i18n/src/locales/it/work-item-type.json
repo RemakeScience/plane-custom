@@ -29,6 +29,9 @@
           "option_add_error": "Impossibile aggiungere l'opzione.",
           "create_error": "Impossibile creare la proprietà.",
           "file_placeholder": "https://…",
+          "file_upload": "Carica file",
+          "file_uploading": "Caricamento…",
+          "file_upload_error": "Impossibile caricare il file.",
           "type": {
             "text": "Testo",
             "number": "Numero",

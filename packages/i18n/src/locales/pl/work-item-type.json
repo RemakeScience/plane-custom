@@ -29,6 +29,9 @@
           "option_add_error": "Nie udało się dodać opcji.",
           "create_error": "Nie udało się utworzyć właściwości.",
           "file_placeholder": "https://…",
+          "file_upload": "Prześlij plik",
+          "file_uploading": "Przesyłanie…",
+          "file_upload_error": "Nie udało się przesłać pliku.",
           "type": {
             "text": "Tekst",
             "number": "Numer",

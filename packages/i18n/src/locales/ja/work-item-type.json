@@ -29,6 +29,9 @@
           "option_add_error": "オプションを追加できませんでした。",
           "create_error": "プロパティを作成できませんでした。",
           "file_placeholder": "https://…",
+          "file_upload": "ファイルをアップロード",
+          "file_uploading": "アップロード中…",
+          "file_upload_error": "ファイルをアップロードできませんでした。",
           "type": {
             "text": "テキスト",
             "number": "数値",

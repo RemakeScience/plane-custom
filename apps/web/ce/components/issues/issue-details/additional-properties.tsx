@@ -13,6 +13,7 @@ import { EIssuePropertyType } from "@plane/types";
 import type { TIssueProperty, TIssuePropertyValue, TIssuePropertyValues } from "@plane/types";
 import { ToggleSwitch } from "@plane/ui";
 // components
+import { FilePropertyField } from "@/plane-web/components/issues/property-fields/file-field";
 import { PropertyRelationField } from "@/plane-web/components/issues/property-fields/relation-field";
 // hooks
 import { useIssueProperties } from "@/hooks/store/use-issue-properties";
@@ -52,6 +53,16 @@ const SidebarPropertyField = observer(function SidebarPropertyField(props: {
       return (
         <PropertyRelationField
           property={property}
+          value={value}
+          disabled={!isEditable}
+          projectId={projectId}
+          workspaceSlug={workspaceSlug}
+          onChange={onCommit}
+        />
+      );
+    case EIssuePropertyType.FILE:
+      return (
+        <FilePropertyField
           value={value}
           disabled={!isEditable}
           projectId={projectId}

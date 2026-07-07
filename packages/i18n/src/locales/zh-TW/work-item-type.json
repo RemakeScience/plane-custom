@@ -29,6 +29,9 @@
           "option_add_error": "無法新增該選項。",
           "create_error": "無法建立該屬性。",
           "file_placeholder": "https://…",
+          "file_upload": "上傳檔案",
+          "file_uploading": "上傳中…",
+          "file_upload_error": "無法上傳此檔案。",
           "type": {
             "text": "文字",
             "number": "數字",

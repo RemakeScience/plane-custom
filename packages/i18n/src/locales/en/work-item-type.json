@@ -29,6 +29,9 @@
           "option_add_error": "Could not add the option.",
           "create_error": "Could not create the property.",
           "file_placeholder": "https://…",
+          "file_upload": "Upload file",
+          "file_uploading": "Uploading…",
+          "file_upload_error": "Could not upload the file.",
           "type": {
             "text": "Text",
             "number": "Number",

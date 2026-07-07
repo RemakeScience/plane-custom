@@ -29,6 +29,9 @@
           "option_add_error": "Não foi possível adicionar a opção.",
           "create_error": "Não foi possível criar a propriedade.",
           "file_placeholder": "https://…",
+          "file_upload": "Enviar arquivo",
+          "file_uploading": "Enviando…",
+          "file_upload_error": "Não foi possível enviar o arquivo.",
           "type": {
             "text": "Texto",
             "number": "Número",

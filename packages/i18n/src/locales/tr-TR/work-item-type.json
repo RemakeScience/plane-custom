@@ -29,6 +29,9 @@
           "option_add_error": "Seçenek eklenemedi.",
           "create_error": "Özellik oluşturulamadı.",
           "file_placeholder": "https://…",
+          "file_upload": "Dosya yükle",
+          "file_uploading": "Yükleniyor…",
+          "file_upload_error": "Dosya yüklenemedi.",
           "type": {
             "text": "Metin",
             "number": "Sayı",

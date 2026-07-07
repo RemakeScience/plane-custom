@@ -15,6 +15,7 @@ import type { TIssueProperty, TIssuePropertyOption, TIssuePropertyValue } from "
 import { ToggleSwitch } from "@plane/ui";
 // components
 import type { TIssueFields } from "@/plane-web/components/issues/issue-modal";
+import { FilePropertyField } from "@/plane-web/components/issues/property-fields/file-field";
 import { PropertyRelationField } from "@/plane-web/components/issues/property-fields/relation-field";
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
@@ -73,13 +74,7 @@ const PropertyField = observer(function PropertyField(props: {
         );
       case EIssuePropertyType.FILE:
         return (
-          <input
-            type="url"
-            placeholder={t("work_item_types.settings.properties.ce.file_placeholder")}
-            className={inputClassName}
-            value={typeof single === "string" ? single : ""}
-            onChange={(e) => onChange(e.target.value === "" ? [] : [e.target.value])}
-          />
+          <FilePropertyField value={value} projectId={projectId} workspaceSlug={workspaceSlug} onChange={onChange} />
         );
       case EIssuePropertyType.BOOLEAN:
         return <ToggleSwitch value={single === true || single === "true"} onChange={(v) => onChange([v])} size="sm" />;

@@ -13,6 +13,8 @@ import { useTranslation } from "@plane/i18n";
 import { EIssuePropertyType, EIssuePropertyRelationType } from "@plane/types";
 import type { TIssueProperty, TIssuePropertyValue } from "@plane/types";
 import { ToggleSwitch } from "@plane/ui";
+// components
+import { FilePropertyField } from "@/plane-web/components/issues/property-fields/file-field";
 // hooks
 import { useIssueProperties } from "@/hooks/store/use-issue-properties";
 import { useMember } from "@/hooks/store/use-member";
@@ -107,14 +109,26 @@ const CustomPropertyCell = observer(function CustomPropertyCell(props: {
   property: TIssueProperty;
   values: TIssuePropertyValue[];
   disabled: boolean;
+  projectId: string;
+  workspaceSlug: string;
   onCommit: (value: TIssuePropertyValue[]) => void;
 }) {
-  const { property, values, disabled, onCommit } = props;
+  const { property, values, disabled, projectId, workspaceSlug, onCommit } = props;
   const { getPropertyOptions } = useIssueProperties();
   const { t } = useTranslation();
   const single = values?.[0];
 
   switch (property.property_type) {
+    case EIssuePropertyType.FILE:
+      return (
+        <FilePropertyField
+          value={values}
+          disabled={disabled}
+          projectId={projectId}
+          workspaceSlug={workspaceSlug}
+          onChange={onCommit}
+        />
+      );
     case EIssuePropertyType.BOOLEAN:
       return (
         <ToggleSwitch
@@ -215,6 +229,8 @@ export const SpreadsheetCustomPropertyValueCells = observer(function Spreadsheet
               property={property}
               values={values?.[property.id] ?? []}
               disabled={disabled}
+              projectId={projectIdStr ?? ""}
+              workspaceSlug={workspaceSlug?.toString() ?? ""}
               onCommit={(newValue) => handleCommit(property, newValue)}
             />
           </div>

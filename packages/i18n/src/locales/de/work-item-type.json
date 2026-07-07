@@ -29,6 +29,9 @@
           "option_add_error": "Die Option konnte nicht hinzugefügt werden.",
           "create_error": "Die Eigenschaft konnte nicht erstellt werden.",
           "file_placeholder": "https://…",
+          "file_upload": "Datei hochladen",
+          "file_uploading": "Wird hochgeladen…",
+          "file_upload_error": "Die Datei konnte nicht hochgeladen werden.",
           "type": {
             "text": "Text",
             "number": "Zahl",
