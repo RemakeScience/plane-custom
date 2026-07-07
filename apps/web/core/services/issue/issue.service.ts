@@ -11,6 +11,7 @@ import type {
   TIssueParams,
   IIssueDisplayProperties,
   TBulkOperationsPayload,
+  TGithubPullRequest,
   TIssue,
   TIssueActivity,
   TIssueLink,
@@ -333,6 +334,18 @@ export class IssueService extends APIService {
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
+      });
+  }
+
+  async fetchGithubPullRequests(
+    workspaceSlug: string,
+    projectId: string,
+    issueId: string
+  ): Promise<TGithubPullRequest[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/${issueId}/github/pull-requests/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response;
       });
   }
 

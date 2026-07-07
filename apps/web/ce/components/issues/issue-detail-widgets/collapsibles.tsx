@@ -6,6 +6,8 @@
 
 // plane types
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
+// components
+import { GithubPullRequestsCollapsible } from "@/components/issues/issue-detail-widgets/pull-requests";
 
 export type TWorkItemAdditionalWidgetCollapsiblesProps = {
   disabled: boolean;
@@ -16,6 +18,17 @@ export type TWorkItemAdditionalWidgetCollapsiblesProps = {
   workspaceSlug: string;
 };
 
-export function WorkItemAdditionalWidgetCollapsibles(_props: TWorkItemAdditionalWidgetCollapsiblesProps) {
-  return null;
+export function WorkItemAdditionalWidgetCollapsibles(props: TWorkItemAdditionalWidgetCollapsiblesProps) {
+  const { hideWidgets, issueServiceType, projectId, workItemId, workspaceSlug } = props;
+
+  if (hideWidgets?.includes("pull-requests")) return null;
+
+  return (
+    <GithubPullRequestsCollapsible
+      workspaceSlug={workspaceSlug}
+      projectId={projectId}
+      issueId={workItemId}
+      issueServiceType={issueServiceType}
+    />
+  );
 }
