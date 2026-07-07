@@ -344,6 +344,10 @@ Convention : stores injectés via `@/plane-web/store/*` → `apps/web/ce/store/*
       sidebar + création dans les settings, ✅ **i18n** des libellés (namespace `...properties.ce`, 19 locales
       100% sync). Non-régression : 115 tests contract/app (8 rate-limit pré-existants), check:types 28/28, lint web
       0 erreur. Détail §22.
+- [x] **Post-S9 — améliorations & correctifs.** ✅ Filtre par type dans la vue principale (rich-filters) ; ✅ fix bug
+      d'hydratation qui cassait la barre de filtres en dev ; ✅ spreadsheet batch-fetch + édition inline (fin du N+1) ;
+      ✅ FILE = vrai upload (pipeline d'assets MinIO/Scaleway). 121 tests contract/app. Récap §23, backlog §23.
+- [ ] **Session 10 — Liaison GitHub (PR ↔ work items).** Voir §24 (prépa) — à lancer en contexte vierge.
 
 ---
 
@@ -850,3 +854,32 @@ colonnes custom en vue workspace (multi-projet) ; nettoyage des assets orphelins
 cache `valuesByIssue` dans `IssuePropertiesStore` ; `custom-property-columns.tsx` fetch batch unique (via le header,
 `issueIds` threadé table→header) + **cellules éditables** (commit upsert + optimiste, RELATION lecture seule). Vérifié
 live sur le layout spreadsheet (colonne « Severity », édition High persistée, 0 appel per-issue).
+
+---
+
+## 23. Récapitulatif post-Session 9 (livré & vérifié)
+
+Après la S9, quatre incréments ont été livrés, chacun vérifié live et commité (branche `feat/work-item-types`) :
+
+| # | Incrément | Commits | Vérif |
+| - | --------- | ------- | ----- |
+| 1 | **Filtre par type dans la vue principale** (rich-filters) — clé `issue_type` + config miroir de `state`, filtre backend `IssueFilterSet`, gate `is_issue_type_enabled`, fetch des types au montage du HOC | `feat(api)` + `feat(web)` | Live : Bug→0, Task→3 ; API 200 ; §22 E |
+| 2 | **Fix bug d'hydratation/filtres** (pré-existant) — `HydrateFallback` stable + instance de filtre créée en effet (StrictMode-safe) | `fix(web)` | Live hard reload : plus d'erreurs, dropdown OK ; §22 |
+| 3 | **Spreadsheet batch + édition inline** — endpoint batch valeurs, cache store, cellules éditables (fin du N+1) | `feat(api)` + `feat(web)` | Live : édition Severity persistée, 0 N+1 |
+| 4 | **FILE = vrai upload** — réutilise le pipeline d'assets projet (MinIO dev / Scaleway prod par config) ; type `ISSUE_PROPERTY_VALUE` + MIME élargis ; composant `file-field.tsx` (modale/sidebar/spreadsheet) ; i18n 19 locales | `feat(api)` + `feat(web)` | Live E2E : presign 200 → MinIO 204 → confirm 204 → download 302 |
+
+**État global** : Work Item Types + Epics + Custom Properties **complets, polis et vérifiés**. `check:types` 28/28,
+lint web 0 erreur, oxfmt clean, i18n 19/19, contract/app **121 passés** (8 rate-limit magic-link pré-existants).
+
+### Backlog / nice-to-have (non bloquant, aucun engagement)
+
+- **Colonnes custom en vue workspace** (multi-projet) : aujourd'hui les colonnes/valeurs custom du spreadsheet sont
+  scopées **projet** (`custom-property-columns.tsx` skip si pas de `projectId` param). Une vue workspace mélange des
+  projets aux propriétés différentes → nécessiterait de grouper par projet ou d'agréger les définitions.
+- **Nettoyage des assets orphelins** : remplacer/supprimer la valeur d'une propriété FILE n'efface pas l'ancien
+  `FileAsset` (soft-delete à câbler sur le remplacement).
+- **Édition inline RELATION dans le spreadsheet** : les cellules RELATION restent en lecture seule (édition via
+  modale/sidebar) — on pourrait y mettre le `PropertyRelationField` comme pour les autres types.
+- **Batch endpoint épics-detail / GANTT** : `epics-detail/` existe (S9) ; vérifier d'autres 404 non fatals éventuels.
+- **`default_value` côté settings UI** : le backend applique `default_value`/option `is_default` à la création, mais
+  l'UI settings ne permet pas encore de *saisir* un défaut par propriété (à ajouter dans `type-properties.tsx`).
