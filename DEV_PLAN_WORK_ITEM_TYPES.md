@@ -883,3 +883,115 @@ lint web 0 erreur, oxfmt clean, i18n 19/19, contract/app **121 passés** (8 rate
 - **Batch endpoint épics-detail / GANTT** : `epics-detail/` existe (S9) ; vérifier d'autres 404 non fatals éventuels.
 - **`default_value` côté settings UI** : le backend applique `default_value`/option `is_default` à la création, mais
   l'UI settings ne permet pas encore de *saisir* un défaut par propriété (à ajouter dans `type-properties.tsx`).
+
+---
+
+## 24. Session 10 (prépa) — Liaison GitHub ↔ Plane (PR sur les work items)
+
+> Section de préparation pour une session lancée **en contexte vierge**. Objectif : pouvoir dire
+> « vas-y, on passe à la liaison GitHub » avec tout le contexte ici. Rien n'est encore codé pour cette liaison ;
+> ci-dessous = reconnaissance + plan.
+
+### 24.1 Objectif
+
+Relier GitHub et Plane pour **faire remonter les Pull Requests sur les work items**, piloté par des **événements
+(webhooks GitHub)**. Cas d'usage : quand une PR GitHub est ouverte / mise à jour / mergée et référence un work item
+(ex. `WIT-123` dans le titre ou la branche), elle apparaît sur le work item Plane correspondant avec son état
+(open / merged / closed / draft) et un lien cliquable. Direction principale : **GitHub → Plane** (bidirectionnel =
+plus tard, hors MVP). Le mécanisme (GitHub App vs OAuth, webhooks vs polling) est **à trancher en début de session**
+(voir 24.4).
+
+### 24.2 Ce qui existe déjà dans le repo (les « prises »)
+
+- **Webhooks sortants (Plane → externe), complets — à réutiliser comme patron** :
+  - Modèles `apps/api/plane/db/models/webhook.py` (`Webhook` signé HMAC-SHA256 via `secret_key`, `WebhookLog`,
+    `ProjectWebhook`).
+  - Dispatch `apps/api/plane/bgtasks/webhook_task.py` : `model_activity` → `webhook_activity` → `webhook_send_task`
+    (header `X-Plane-Signature`, `pinned_fetch` anti-SSRF, retry/backoff). Événements : project/issue/cycle/module/
+    issue_comment/intake.
+  - Vues/urls `app/views/webhook/base.py`, `app/urls/webhook.py`.
+  - ⇒ copier ce module comme template pour la signature/vérif HMAC et le dispatch.
+- **Modèles d'intégration DORMANTS** (présents en DB, aucune vue/serializer/url branchée — scaffolding legacy) :
+  `apps/api/plane/db/models/integration/` : `Integration`, `WorkspaceIntegration` (bot `actor`, `api_token`,
+  `config`), `github.py` : `GithubRepository`, `GithubRepositorySync`, `GithubIssueSync` (mirroring d'**issues**, pas
+  de PR), `GithubCommentSync`. ⇒ à *revive* ou ignorer. **Aucun modèle PR n'existe.**
+- **Surface « lien externe » sur un work item, réutilisable** : `IssueLink` (`db/models/issue.py:392`, `title`+`url`+
+  `metadata` JSON) + `IssueLinkViewSet` (`app/views/issue/link.py`) + widget front
+  `apps/web/core/components/issues/issue-detail/links/*`. ⇒ chemin le plus rapide pour « afficher une PR » (url = lien
+  PR, metadata = état/auteur). Manque un champ d'état → metadata JSON, ou modèle dédié pour un statut live.
+- **Config/secrets** : `InstanceConfiguration` (`license/models/instance.py:72`) + helper `get_configuration_value`
+  (`plane.license.utils.instance_value`). Registre `utils/instance_config_variables/core.py` (contient déjà
+  `GITHUB_CLIENT_ID/SECRET` pour le **login** OAuth). ⇒ y ajouter `GITHUB_APP_ID`/`GITHUB_APP_PRIVATE_KEY`/
+  `GITHUB_WEBHOOK_SECRET`.
+- **GitHub aujourd'hui = login OAuth seulement** : `authentication/provider/oauth/github.py` (+ vues app/space). Pas
+  d'accès repo/PR.
+- **Registre des widgets du détail work item** (points d'insertion UI) :
+  `apps/web/ce/components/issues/issue-detail-widgets/{collapsibles,action-buttons,modals}.tsx`.
+
+### 24.3 Ce qui manque (à construire)
+
+- **Endpoint entrant** recevant les webhooks GitHub (`pull_request`, `pull_request_review`, `push`) — aucun récepteur
+  inbound n'existe.
+- **Helper de vérification HMAC entrante** (`X-Hub-Signature-256`) — n'existe pas (seule la signature *sortante*
+  existe) ; à écrire en comparaison constant-time.
+- **Modèle PR** `GithubPullRequest` (ou `IssueLinkedPR`) : pr_number, repo, url, title, state, author, merged_at, FK
+  `Issue` (+ workspace/project) + migration. `GithubIssueSync` ne couvre pas les PR.
+- **Trigger de liaison** : parser les refs `#IDENT-seq` (titre PR / branche / body) → résoudre le work item via
+  `project.identifier` + `sequence_id` → upsert PR + `issue_activity`. bgtask miroir de `webhook_activity`.
+- **UI** : section « Pull Requests » sur le détail work item (nouveau collapsible dans le registre CE) + réglages de
+  connexion (installer la GitHub App / mapper repo↔projet). Rien côté front (tree EE absent, pas même stub).
+- **Flux d'installation** : GitHub App (recommandé) ou OAuth-app scope repo. L'OAuth actuel est login-only.
+
+### 24.4 Options d'architecture (à trancher en début de session)
+
+- **A. GitHub App + webhooks (recommandé)** : la App (installée sur l'org/les repos) envoie les événements
+  `pull_request` à un endpoint Plane ; auth par installation token (JWT App → installation token). Permissions fines,
+  webhooks natifs, secret de webhook pour la vérif HMAC. Coût : flux d'install + gestion des tokens.
+- **B. OAuth PAT + webhook repo** : plus simple (un token perso + un webhook créé à la main), moins propre/scalable.
+  Bon pour un POC.
+- **C. Polling API GitHub** (sans webhook) : cron listant les PR référençant des work items. Simple, pas d'endpoint
+  entrant, mais latence/quota. Fallback si Plane n'est pas exposé publiquement en dev.
+- **Surface PR** : (i) réutiliser `IssueLink` (rapide, état en metadata, pas de live-status) vs (ii) modèle
+  `GithubPullRequest` dédié (état live, checks, filtrable).
+
+**Reco MVP** : Option A + modèle PR dédié + widget détail. Pour un premier jet livrable vite : `IssueLink` +
+Option B, puis migration vers A.
+
+### 24.5 Plan MVP proposé (phases, à affiner)
+
+1. **Backend socle** : modèle `GithubPullRequest` (+ migration) ; secrets via `InstanceConfiguration` ; helper de
+   vérif HMAC entrante (tests unitaires).
+2. **Endpoint entrant** : `POST .../github/webhook/` → vérifie signature, parse `pull_request`, extrait `#IDENT-seq`,
+   résout le work item, upsert PR + `issue_activity`. Tests contract.
+3. **UI détail** : collapsible « Pull Requests » (liste + état + lien) branché dans le registre widgets CE.
+4. **Connexion/réglages** : settings pour installer la GitHub App / mapper repos↔projets (ou POC : secret + repo). i18n
+   19 locales (skill translate).
+5. **Vérif live** : rejouer un payload `pull_request` signé → voir la PR remonter sur un work item (`pnpm dev`,
+   Chrome DevTools).
+
+### 24.6 Décisions à figer avant de coder
+
+- GitHub **App** vs OAuth/PAT (24.4 A/B) ? Multi-repo/multi-org attendu ?
+- Sens : GitHub→Plane seulement, ou aussi Plane→GitHub (créer/brancher une PR depuis Plane) ?
+- Convention de référence work item : `#WIT-123` dans le **titre** / la **branche** / le **body** ? (définir le
+  regex ; `IDENT` = `project.identifier`, `seq` = `sequence_id`.)
+- Surface : `IssueLink` (rapide) vs modèle `GithubPullRequest` (état live) ?
+- Étendue du statut : open/merged/closed seulement, ou aussi checks CI / reviewers ?
+
+### 24.7 Gotchas connus
+
+- **Webhooks entrants en dev** : Plane local n'est pas exposé publiquement → GitHub ne peut pas le POST. Prévoir un
+  tunnel (ngrok / cloudflared) OU tester via un **payload signé rejoué localement** (fixture) — plus simple pour les
+  tests. La signature HMAC utilise `GITHUB_WEBHOOK_SECRET`.
+- Réutiliser `pinned_fetch` (anti-SSRF) pour tout appel **sortant** vers l'API GitHub.
+- Le tree d'intégration EE est **absent** en CE (pas de stub) → tout l'UI est à créer ; s'inspirer du widget `links/`
+  et du registre `issue-detail-widgets/`.
+- Stack : front `pnpm dev` (port 3000, cf. §22 bug hydratation déjà corrigé) ; backend `docker-compose-local.yml` ;
+  tests `docker-compose-test.yml`. Hook local : pas d'accents dans les commandes shell, pas de `../`.
+
+### 24.8 Comment lancer la prochaine session
+
+Dire : « **vas-y, on passe à la liaison GitHub** ». Le nouvel agent doit lire ce §24 + la mémoire projet
+`plane-fork-work-item-types`, valider l'option d'archi (24.4) avec l'utilisateur, puis dérouler le plan 24.5 sur une
+**nouvelle branche** (ex. `feat/github-pr-integration`) — ne pas continuer sur `feat/work-item-types` (dédiée aux
+types/propriétés).
