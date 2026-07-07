@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "Open preview environment",
+    "state": {
+      "open": "Open",
+      "merged": "Merged",
+      "closed": "Closed"
+    }
+  },
   "link": {
     "modal": {
       "url": {

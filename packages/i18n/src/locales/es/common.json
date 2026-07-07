@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "Abrir entorno de vista previa",
+    "state": {
+      "open": "Abierta",
+      "merged": "Fusionada",
+      "closed": "Cerrada"
+    }
+  },
   "link": {
     "modal": {
       "url": {

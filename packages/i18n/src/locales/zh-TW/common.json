@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "開啟預覽環境",
+    "state": {
+      "open": "開啟",
+      "merged": "已合併",
+      "closed": "已關閉"
+    }
+  },
   "link": {
     "modal": {
       "url": {

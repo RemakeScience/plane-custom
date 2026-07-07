@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "打开预览环境",
+    "state": {
+      "open": "打开",
+      "merged": "已合并",
+      "closed": "已关闭"
+    }
+  },
   "link": {
     "modal": {
       "url": {

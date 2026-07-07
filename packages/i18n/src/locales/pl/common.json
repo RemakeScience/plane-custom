@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "Otwórz środowisko podglądu",
+    "state": {
+      "open": "Otwarty",
+      "merged": "Scalony",
+      "closed": "Zamknięty"
+    }
+  },
   "link": {
     "modal": {
       "url": {

@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "Apri ambiente di anteprima",
+    "state": {
+      "open": "Aperta",
+      "merged": "Unita",
+      "closed": "Chiusa"
+    }
+  },
   "link": {
     "modal": {
       "url": {

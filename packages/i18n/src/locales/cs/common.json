@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "Otevřít prostředí náhledu",
+    "state": {
+      "open": "Otevřený",
+      "merged": "Sloučený",
+      "closed": "Uzavřený"
+    }
+  },
   "link": {
     "modal": {
       "url": {

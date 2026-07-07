@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "미리보기 환경 열기",
+    "state": {
+      "open": "열림",
+      "merged": "병합됨",
+      "closed": "닫힘"
+    }
+  },
   "link": {
     "modal": {
       "url": {

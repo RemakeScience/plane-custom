@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "プレビュー環境を開く",
+    "state": {
+      "open": "オープン",
+      "merged": "マージ済み",
+      "closed": "クローズ"
+    }
+  },
   "link": {
     "modal": {
       "url": {

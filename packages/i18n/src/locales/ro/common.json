@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "Deschide mediul de previzualizare",
+    "state": {
+      "open": "Deschis",
+      "merged": "Îmbinat",
+      "closed": "Închis"
+    }
+  },
   "link": {
     "modal": {
       "url": {

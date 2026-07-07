@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "Mở môi trường xem trước",
+    "state": {
+      "open": "Đang mở",
+      "merged": "Đã hợp nhất",
+      "closed": "Đã đóng"
+    }
+  },
   "link": {
     "modal": {
       "url": {

@@ -402,6 +402,15 @@
       }
     }
   },
+  "pull_requests": {
+    "title": "Pull Requests",
+    "preview_link": "Открыть среду предпросмотра",
+    "state": {
+      "open": "Открыт",
+      "merged": "Влит",
+      "closed": "Закрыт"
+    }
+  },
   "link": {
     "modal": {
       "url": {
