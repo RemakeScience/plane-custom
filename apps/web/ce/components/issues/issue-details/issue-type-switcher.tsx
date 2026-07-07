@@ -12,6 +12,7 @@ import { ChevronDown } from "lucide-react";
 // plane imports
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
+import { EIssueServiceType } from "@plane/types";
 import { CustomSearchSelect } from "@plane/ui";
 // components
 import { IdentifierText } from "@/components/issues/issue-detail/identifier-text";
@@ -36,8 +37,6 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
   // store hooks
   const {
     issue: { getIssueById },
-    // [FORK] work-item-types
-    updateIssue,
   } = useIssueDetail();
   // [FORK] work-item-types
   const { getProjectIdentifierById } = useProject();
@@ -50,6 +49,9 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
   } = useIssueTypes();
   // derived values
   const issue = getIssueById(issueId);
+  // [FORK] work-item-types — epics are served by a separate API (EIssueServiceType.EPICS);
+  // using the default "issues" service would PATCH /issues/<id>/ and 404 for an epic.
+  const { updateIssue } = useIssueDetail(issue?.is_epic ? EIssueServiceType.EPICS : EIssueServiceType.ISSUES);
   // [FORK] work-item-types
   const projectId = issue?.project_id ?? null;
   const isEnabled = isIssueTypeEnabledForProject(projectId);
