@@ -191,6 +191,27 @@ class DefaultEpicTypeEndpoint(BaseViewSet):
     serializer_class = IssueTypeSerializer
     model = IssueType
 
+    # [FORK] work-item-types — read-only accessor for the project's epic type, so
+    # the work item type switcher can offer converting to/from an Epic. Members
+    # may read it (unlike create, which provisions the type and stays admin-only).
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def list(self, request, slug, project_id):
+        epic_type = (
+            IssueType.objects.filter(
+                workspace__slug=slug,
+                project_issue_types__project_id=project_id,
+                is_epic=True,
+            )
+            .distinct()
+            .first()
+        )
+        if epic_type is None:
+            return Response(
+                {"error": "Epics are not enabled for this project."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(IssueTypeSerializer(epic_type).data, status=status.HTTP_200_OK)
+
     @allow_permission([ROLE.ADMIN])
     def create(self, request, slug, project_id):
         project = Project.objects.get(pk=project_id, workspace__slug=slug)

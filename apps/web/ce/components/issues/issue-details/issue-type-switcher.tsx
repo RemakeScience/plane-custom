@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { ChevronDown } from "lucide-react";
+import useSWR from "swr";
 // plane imports
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
@@ -20,8 +21,12 @@ import { IdentifierText } from "@/components/issues/issue-detail/identifier-text
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssueTypes } from "@/hooks/store/use-issue-types";
 import { useProject } from "@/hooks/store/use-project";
+// services
+import { IssueTypeService } from "@/services/issue-type.service";
 // plane web components
 import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
+
+const issueTypeService = new IssueTypeService();
 
 export type TIssueTypeSwitcherProps = {
   issueId: string;
@@ -39,7 +44,7 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
     issue: { getIssueById },
   } = useIssueDetail();
   // [FORK] work-item-types
-  const { getProjectIdentifierById } = useProject();
+  const { getProjectIdentifierById, getProjectById } = useProject();
   const {
     fetchProjectIssueTypes,
     getProjectIssueTypes,
@@ -49,13 +54,25 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
   } = useIssueTypes();
   // derived values
   const issue = getIssueById(issueId);
-  // [FORK] work-item-types — epics are served by a separate API (EIssueServiceType.EPICS);
-  // using the default "issues" service would PATCH /issues/<id>/ and 404 for an epic.
-  const { updateIssue } = useIssueDetail(issue?.is_epic ? EIssueServiceType.EPICS : EIssueServiceType.ISSUES);
   // [FORK] work-item-types
   const projectId = issue?.project_id ?? null;
   const isEnabled = isIssueTypeEnabledForProject(projectId);
+  const isEpicEnabled = !!(projectId && getProjectById(projectId)?.is_epic_enabled);
   const hasFetched = getProjectIssueTypeIds(projectId) !== undefined;
+
+  // [FORK] work-item-types — read the project's epic type so the switcher can
+  // convert a work item to/from an epic. SWR dedupes across all switchers.
+  const { data: epicType } = useSWR(
+    isEpicEnabled && workspaceSlug && projectId ? `DEFAULT_EPIC_TYPE_${workspaceSlug}_${projectId}` : null,
+    isEpicEnabled && workspaceSlug && projectId
+      ? () => issueTypeService.fetchDefaultEpicType(workspaceSlug, projectId)
+      : null
+  );
+
+  // [FORK] work-item-types — route by the CURRENT type (robust across conversions):
+  // an epic (type === the epic type) is served by the epics API, not /issues/ (404).
+  const isEpicItem = epicType?.id ? issue?.type_id === epicType.id : !!issue?.is_epic;
+  const { updateIssue } = useIssueDetail(isEpicItem ? EIssueServiceType.EPICS : EIssueServiceType.ISSUES);
 
   useEffect(() => {
     if (isEnabled && workspaceSlug && projectId && !hasFetched) {
@@ -68,12 +85,17 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
   const issueTypes = getProjectIssueTypes(projectId, true) ?? [];
 
   // Feature off / no types / read-only — render the plain identifier (icon + PROJ-123).
-  if (!isEnabled || disabled || issueTypes.length === 0) {
+  if (!isEnabled || disabled || (issueTypes.length === 0 && !epicType)) {
     return <IssueIdentifier issueId={issueId} projectId={projectId} size="md" enableClickToCopyIdentifier />;
   }
 
-  const selected = issue.type_id ? getIssueTypeById(issue.type_id) : undefined;
-  const options = issueTypes.map((issueType) => ({
+  // [FORK] work-item-types — the epic type is excluded from the regular type list;
+  // append it so a work item can be converted to (or away from) an epic.
+  const typeOptions = [...issueTypes];
+  if (epicType && !typeOptions.some((type) => type.id === epicType.id)) typeOptions.push(epicType);
+
+  const selected = isEpicItem ? epicType : issue.type_id ? getIssueTypeById(issue.type_id) : undefined;
+  const options = typeOptions.map((issueType) => ({
     value: issueType.id,
     query: issueType.name,
     content: (
@@ -104,7 +126,7 @@ export const IssueTypeSwitcher = observer(function IssueTypeSwitcher(props: TIss
             {selected?.logo_props?.in_use ? (
               <Logo logo={selected.logo_props} size={14} />
             ) : (
-              <span className="text-11 text-tertiary">Type</span>
+              <span className="text-11 text-tertiary">{selected?.name ?? "Type"}</span>
             )}
             <ChevronDown className="size-3 text-tertiary" />
           </span>

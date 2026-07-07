@@ -32,7 +32,8 @@ urlpatterns = [
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/default-epic-type/",
-        DefaultEpicTypeEndpoint.as_view({"post": "create"}),
+        # [FORK] work-item-types — GET added so the type switcher can read the epic type (convert to/from epic)
+        DefaultEpicTypeEndpoint.as_view({"post": "create", "get": "list"}),
         name="project-default-epic-type",
     ),
 ]

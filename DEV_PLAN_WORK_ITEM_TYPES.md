@@ -871,6 +871,28 @@ Après la S9, quatre incréments ont été livrés, chacun vérifié live et com
 **État global** : Work Item Types + Epics + Custom Properties **complets, polis et vérifiés**. `check:types` 28/28,
 lint web 0 erreur, oxfmt clean, i18n 19/19, contract/app **121 passés** (8 rate-limit magic-link pré-existants).
 
+### Conversion de type work item ↔ Epic (2026-07-07, livré & vérifié live)
+
+Le **sélecteur de type** (`ce/components/issues/issue-details/issue-type-switcher.tsx`) permet désormais de **convertir
+un work item dans les deux sens** : issue régulière → Epic **et** Epic → issue régulière.
+
+- **Cause du bug initial (404)** : un epic est un `Issue` dont le `type` a `is_epic=True`, servi **uniquement** par
+  l'endpoint `epics/` (`Issue.epic_objects`) ; l'endpoint `issues/` (`Issue.issue_objects`) **exclut** les epics. Le
+  switcher appelait `useIssueDetail()` sans serviceType → `PATCH issues/<id>/` → 404 sur un epic. En plus, le front ne
+  pouvait pas **savoir** qu'un item était un epic (le payload `browse`/`IssueDetailSerializer` ne portait pas `is_epic`,
+  et le type Epic est exclu de la map des types).
+- **Fix (backend + frontend)** :
+  - `api` : `IssueDetailSerializer` expose `is_epic` (dérivé de `type.is_epic`) ; nouveau **GET** (member) sur
+    `default-epic-type/` (via `DefaultEpicTypeEndpoint.list`) pour lire le type Epic du projet.
+  - `web` : le switcher lit le type Epic (SWR sur `fetchDefaultEpicType`), **route l'update par comparaison de type**
+    (`issue.type_id === epicType.id` → service `EPICS`, sinon `ISSUES` ; robuste après conversion et re-édition, ne
+    dépend pas du flag `is_epic` qui peut être périmé), et **ajoute l'option "Epic"** au menu.
+- **Vérif live (Chrome DevTools)** : régulière→Epic = `PATCH issues/ 204` (l'item bascule dans `epic_objects`) ;
+  Epic→régulière = `PATCH epics/ 204` (rebascule dans `issue_objects`). Affichage du type "Epic" OK.
+- **Note UX / edge** : après conversion, la vue courante (browse/peek) reste sur son service d'origine jusqu'à un
+  rechargement ; le routing par type gère correctement la ré-édition immédiate, mais un refetch/redirection auto vers la
+  bonne vue après conversion serait un plus (non bloquant).
+
 ### Backlog / nice-to-have (non bloquant, aucun engagement)
 
 - **Colonnes custom en vue workspace** (multi-projet) : aujourd'hui les colonnes/valeurs custom du spreadsheet sont
@@ -1236,6 +1258,7 @@ grep -rn "\[FORK\]" apps packages --include=*.ts --include=*.tsx --include=*.py 
 État actuel (2026-07-07) : **toute la surface de divergence est marquée** — **128 marqueurs** au total :
 `github-pr-integration` (15) pour la liaison GitHub, `work-item-types` (113) pour l'ensemble des sessions antérieures
 (Work Item Types / Epics / Custom Properties). Slugs utilisés :
+
 - `github-pr-integration` — liaison GitHub (§24).
 - `work-item-types` — umbrella pour tout le reste du fork (types d'items, epics, propriétés custom, upload FILE, fix
   d'hydratation §22).

@@ -91,4 +91,13 @@ export class IssueTypeService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  /** Reads the project's Epic type (used to convert work items to/from an epic). */
+  async fetchDefaultEpicType(workspaceSlug: string, projectId: string): Promise<TIssueType> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/default-epic-type/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }
