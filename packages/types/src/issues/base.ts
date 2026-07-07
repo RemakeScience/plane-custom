@@ -11,7 +11,7 @@ export * from "./issue_link";
 export * from "./issue_attachment";
 export * from "./issue_relation";
 export * from "./issue_sub_issues";
-export * from "./github_pull_request";
+export * from "./github_pull_request"; // [FORK] github-pr-integration
 export * from "./activity/base";
 
 export type TLoader = "init-loader" | "mutation" | "pagination" | "loaded" | undefined;

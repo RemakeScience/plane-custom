@@ -7,6 +7,7 @@
 // plane types
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
 // components
+// [FORK] github-pr-integration — CE extension seam renders the Pull Requests widget
 import { GithubPullRequestsCollapsible } from "@/components/issues/issue-detail-widgets/pull-requests";
 
 export type TWorkItemAdditionalWidgetCollapsiblesProps = {

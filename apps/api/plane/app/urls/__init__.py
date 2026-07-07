@@ -8,7 +8,7 @@ from .asset import urlpatterns as asset_urls
 from .cycle import urlpatterns as cycle_urls
 from .estimate import urlpatterns as estimate_urls
 from .external import urlpatterns as external_urls
-from .external_github import urlpatterns as external_github_urls
+from .external_github import urlpatterns as external_github_urls  # [FORK] github-pr-integration
 from .intake import urlpatterns as intake_urls
 from .issue import urlpatterns as issue_urls
 from .module import urlpatterns as module_urls
@@ -32,7 +32,7 @@ urlpatterns = [
     *cycle_urls,
     *estimate_urls,
     *external_urls,
-    *external_github_urls,
+    *external_github_urls,  # [FORK] github-pr-integration
     *intake_urls,
     *issue_urls,
     *module_urls,

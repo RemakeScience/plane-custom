@@ -1183,3 +1183,88 @@ Branche `feat/github-pr-integration`, **3 commits, non poussée** :
 
 (Un `no-shadow` préexistant dans `root.store.ts` a été corrigé au passage — param `action` → `widget` — car le hook
 pre-commit `oxlint --deny-warnings` le bloquait dès qu'on touchait ce fichier.)
+
+---
+
+## 26. Maintenabilité & synchronisation avec l'upstream (makeplane/plane)
+
+> **But** : garder ce fork fonctionnel tout en récupérant au fil de l'eau les releases de la source open-source. Cette
+> section donne la **carte de divergence**, la **convention de marquage** et la **procédure de sync** recommandée.
+
+### 26.1 Carte de divergence (mesurée le 2026-07-07)
+
+Remote `upstream` = `https://github.com/makeplane/plane.git`. Divergence de la branche `feat/github-pr-integration`
+par rapport au `merge-base` avec `upstream/preview` :
+
+- **93 fichiers upstream MODIFIÉS** (= surface de conflit potentielle) et **59 fichiers AJOUTÉS** (neufs → zéro
+  conflit).
+- La **feature GitHub de cette session** ne pèse que ~9 fichiers de code partagés (barrels `__init__.py`, 1 méthode de
+  service, `root.store.ts`, 2 fichiers de types) + 19 JSON i18n — tout le reste est en fichiers neufs. **Peu coûteux.**
+- L'essentiel de la divergence (donc du coût de sync) vient des **sessions antérieures** (Work Item Types / Epics /
+  Custom Properties), qui **réintègrent des features gardées dans le repo EE privé** de Plane → le CE ne convergera
+  jamais avec, on porte ce diff en permanence.
+
+**Fichiers upstream « chauds » à surveiller en priorité** (édités par le fork ET souvent par l'upstream) :
+
+- Backend : `apps/api/plane/db/models/issue.py`, `db/models/project.py`, `app/views/issue/base.py`,
+  `app/views/issue/activity.py`, `utils/issue_filters.py`.
+- Frontend : `apps/web/core/store/issue/issue-details/root.store.ts`, `core/store/root.store.ts`,
+  `core/components/issues/issue-modal/{base,modal}.tsx`, les layouts `issue-layouts/spreadsheet/*`, les filtres
+  `work-item-filters/*`, `core/services/issue/issue.service.ts`.
+- Packages : `packages/types/src/issues/issue.ts`, `types/src/enums.ts`, `types/src/index.ts`,
+  `constants/src/issue/*`.
+
+Régénérer la carte à tout moment :
+
+```
+git fetch upstream
+git merge-base HEAD upstream/preview            # -> <BASE>
+git diff --diff-filter=M --name-only <BASE> HEAD   # fichiers modifies (surface de conflit)
+git diff --diff-filter=A --name-only <BASE> HEAD   # fichiers ajoutes (sans risque)
+```
+
+### 26.2 Convention de marquage `[FORK]`
+
+Toute édition d'un **fichier upstream** doit porter un commentaire grep-able `// [FORK] <slug>` (TS) ou
+`# [FORK] <slug>` (Python). Permet de **lister toute la surface de divergence d'un coup** et, après un merge upstream,
+de vérifier que chaque marqueur a survécu.
+
+```
+grep -rn "\[FORK\]" apps packages --include=*.ts --include=*.tsx --include=*.py | grep -v node_modules
+```
+
+État actuel : la feature GitHub est intégralement marquée (slug `github-pr-integration`). **À faire (dette)** : passer
+les fichiers des sessions antérieures (Work Item Types / Epics / Custom Properties) sous le même marquage — c'est le
+plus gros de la surface et il n'est pas encore annoté.
+
+### 26.3 Procédure de sync upstream recommandée
+
+1. **Suivre des tags stables, pas `preview`.** Le fork est basé sur `upstream/preview` (branche de dev mouvante = pire
+   cas). Se re-baseliner sur un **tag** (`v1.3.1`, …) et intégrer **de tag en tag** à cadence (ex. mensuelle).
+2. **Merger, pas rebaser.** `git merge upstream/<tag>` dans la branche du fork → conflits résolus **une fois** par sync
+   (rebaser 90+ fichiers en boucle est intenable).
+3. **Résoudre en s'appuyant sur les marqueurs** `[FORK]` (26.2) : sur chaque fichier chaud (26.1), garder la version
+   fork des blocs marqués, prendre la version upstream ailleurs.
+4. **Gate de non-régression obligatoire après chaque merge** (c'est ce qui prouve « ça marche encore ») :
+   - Backend : `docker compose -f docker-compose-test.yml run --rm api-tests pytest -m unit` + `manage.py check` +
+     `manage.py makemigrations --check` (détecte une dérive de schéma).
+   - Frontend : `pnpm --filter @plane/types build` **puis** `pnpm --filter web check:types` ; i18n
+     `pnpm --filter @plane/i18n run sync:check` (doit rester 100 %).
+   - Smokes E2E sur les features réintégrées (le flow widget PR via Chrome DevTools, création d'un work item type,
+     d'une propriété custom).
+5. **Réduire la surface `core/` au fil des syncs.** Quand une édition dans `apps/web/core/**` peut être déplacée
+   derrière la couture `@/plane-web/*` → `apps/web/ce/**` (l'indirection prévue par Plane pour l'EE/les forks), le
+   faire — les conflits en `core/` coûtent le plus. Le widget GitHub le fait déjà (rendu via le stub CE).
+6. **Éditer additif dans les fichiers chauds** : ajouter des champs/lignes plutôt que reflow le code existant → le
+   merge 3-way réussit tout seul bien plus souvent.
+
+### 26.4 Cas particuliers
+
+- **i18n** : la divergence i18n est _additive_ (bloc top-level `pull_requests` + les clés des sessions antérieures).
+  Pas de marqueur possible (JSON) → repérable par la **clé** elle-même (`grep -rn '"pull_requests"' packages/i18n`).
+  Un conflit n'arrive que si l'upstream insère au même endroit ; `sync:check` garantit la complétude après résolution.
+- **Migrations DB** : l'upstream ajoute des migrations avec ses propres numéros. En cas de collision de numéro/branche,
+  régénérer/renuméroter la migration du fork après merge et relancer `migrate`. `makemigrations --check` en CI détecte
+  toute dérive de modèle non migrée.
+- **Feature upstreamable** : la liaison GitHub est générique (non-EE) → envisager une PR vers `makeplane/plane`. Si
+  acceptée, on cesse totalement de la maintenir dans le fork.

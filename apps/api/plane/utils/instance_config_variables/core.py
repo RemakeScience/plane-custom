@@ -81,7 +81,7 @@ github_config_variables = [
         "category": "GITHUB",
         "is_encrypted": False,
     },
-    # GitHub App (PR integration: PRs surfaced on work items via inbound webhooks)
+    # [FORK] github-pr-integration — GitHub App (PRs surfaced on work items via inbound webhooks)
     {
         "key": "GITHUB_APP_ID",
         "value": os.environ.get("GITHUB_APP_ID"),

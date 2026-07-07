@@ -93,6 +93,8 @@ from .issue import (
     IssueDescriptionVersionDetailSerializer,
     IssueListDetailSerializer,
 )
+
+# [FORK] github-pr-integration
 from .github import GithubPullRequestSerializer, GithubRepositoryMapSerializer
 
 from .module import (

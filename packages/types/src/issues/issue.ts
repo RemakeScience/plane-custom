@@ -155,6 +155,7 @@ export type TBulkOperationsPayload = {
   properties: Partial<TBulkIssueProperties>;
 };
 
+// [FORK] github-pr-integration — added "pull-requests"
 export type TWorkItemWidgets = "sub-work-items" | "relations" | "links" | "attachments" | "pull-requests";
 
 export type TIssueServiceType = EIssueServiceType.ISSUES | EIssueServiceType.EPICS | EIssueServiceType.WORK_ITEMS;

@@ -77,6 +77,7 @@ from .workspace import (
     WorkspaceUserPreference,
 )
 
+# [FORK] github-pr-integration
 from .github import GithubPullRequest, GithubRepositoryMap
 
 from .favorite import UserFavorite

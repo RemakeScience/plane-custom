@@ -11,7 +11,7 @@ import type {
   TIssueParams,
   IIssueDisplayProperties,
   TBulkOperationsPayload,
-  TGithubPullRequest,
+  TGithubPullRequest, // [FORK] github-pr-integration
   TIssue,
   TIssueActivity,
   TIssueLink,
@@ -337,6 +337,7 @@ export class IssueService extends APIService {
       });
   }
 
+  // [FORK] github-pr-integration
   async fetchGithubPullRequests(
     workspaceSlug: string,
     projectId: string,
