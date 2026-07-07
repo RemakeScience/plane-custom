@@ -794,8 +794,13 @@ dans `IssueViewSet.create` (aujourd'hui appel séparé `property-values/` après
   `MemberDropdown` (single/multi selon `is_multi`, résout les noms) ; ISSUE → `ExistingIssuesListModal` + chips
   (label capturé depuis la sélection). Rendu dans la modale (`PropertyField`) et la sidebar (`SidebarPropertyField`),
   qui reçoivent désormais `projectId`/`workspaceSlug`.
-- **FILE** = input `url` (lien de fichier stocké en `value_text`). ⚠️ Upload binaire réel (nouveau type d'asset
-  backend + flux S3 presigné) **différé** — chantier à part entière.
+- **FILE** = **vrai upload** (post-S9, livré). Réutilise le pipeline d'assets projet de Plane (S3/MinIO en dev,
+  Scaleway en prod par config) : composant partagé `property-fields/file-field.tsx` (`FilePropertyField`) → upload via
+  `fileService.uploadProjectAsset({entity_type: ISSUE_PROPERTY_VALUE})` → stocke `{id,name}` JSON dans `value_text` →
+  lien de download (endpoint GET projet, 302 vers URL présignée). Backend : type `ISSUE_PROPERTY_VALUE` ajouté à
+  `EntityTypeContext` (asset.py, pas de migration) + MIME élargis aux `ATTACHMENT_MIME_TYPES` pour ce type dans
+  `ProjectAssetEndpoint.post` (asset/v2.py) ; enum TS `EFileAssetType`. Câblé modale + sidebar + spreadsheet. **Vérifié
+  live E2E** (presign 200 → upload MinIO 204 → confirm 204 → download 302 ; champ rendu dans le spreadsheet).
 - Settings (`type-properties.tsx`) : options **Relation** et **File** ajoutées + sélecteur member/issue (envoie
   `relation_type` au create, `null` sinon).
 
@@ -837,8 +842,8 @@ complets et polis.**
   `WorkItemFilterRoot` crée/enregistre l'instance dans un **effet** (symétrique avec la suppression). **Vérifié live
   sur hard reload** : plus aucune des 3 erreurs, le dropdown d'ajout s'ouvre et le filtre par type marche.
 
-**⏳ Reste éventuel (post-S9)** : ~~batch endpoint~~ ✅ fait ; ~~édition inline spreadsheet~~ ✅ fait ; upload binaire
-réel pour FILE (en cours) ; colonnes custom en vue workspace (multi-projet).
+**⏳ Reste éventuel (post-S9)** : ~~batch endpoint~~ ✅ ; ~~édition inline spreadsheet~~ ✅ ; ~~upload binaire FILE~~ ✅ ;
+colonnes custom en vue workspace (multi-projet) ; nettoyage des assets orphelins quand on remplace un fichier.
 
 **Amélioration spreadsheet (post-S9, livré)** : endpoint batch `IssuePropertyValuesBulkEndpoint`
 (POST `.../property-values/` avec `{issue_ids}` → `{issue_id:{prop_id:[vals]}}`, +2 tests) ; `fetchBulkValues` +
