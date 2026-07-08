@@ -16,6 +16,11 @@ from .state import (
 
 # [FORK] work-item-types — external v1 API for epics / types / properties
 from .epic import EpicListCreateAPIEndpoint, EpicDetailAPIEndpoint
+from .issue_type import (
+    IssueTypeListCreateAPIEndpoint,
+    IssueTypeDetailAPIEndpoint,
+    EpicTypeAPIEndpoint,
+)
 from .issue import (
     WorkspaceIssueAPIEndpoint,
     IssueListCreateAPIEndpoint,

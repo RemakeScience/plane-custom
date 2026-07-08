@@ -10,6 +10,7 @@ from .project import (
     ProjectCreateSerializer,
     ProjectUpdateSerializer,
 )
+from .issue_type import IssueTypeAPISerializer  # [FORK] work-item-types
 from .issue import (
     IssueSerializer,
     LabelCreateUpdateSerializer,
