@@ -178,31 +178,39 @@ export class IssueStore implements IIssueStore {
     return issuePayload;
   };
 
+  // [FORK] work-item-types — an epic is served by the epics API. Route by the
+  // work item's is_epic (not only the view's serviceType) so operations on an
+  // epic opened in the issues view (e.g. the full-page /browse/ route, which
+  // renders epics through the issues detail store) hit /epics/<id>/ instead of
+  // /issues/<id>/ — the issues API excludes epics and would 404.
+  getWorkItemStore = (issueId: string) => {
+    const isEpic =
+      this.serviceType === EIssueServiceType.EPICS ||
+      !!this.rootIssueDetailStore.rootIssueStore.issues.getIssueById(issueId)?.is_epic;
+    return isEpic
+      ? this.rootIssueDetailStore.rootIssueStore.projectEpics
+      : this.rootIssueDetailStore.rootIssueStore.projectIssues;
+  };
+
   updateIssue = async (workspaceSlug: string, projectId: string, issueId: string, data: Partial<TIssue>) => {
-    const currentStore =
-      this.serviceType === EIssueServiceType.EPICS
-        ? this.rootIssueDetailStore.rootIssueStore.projectEpics
-        : this.rootIssueDetailStore.rootIssueStore.projectIssues;
+    const currentStore = this.getWorkItemStore(issueId); // [FORK] work-item-types
 
     await Promise.all([
       currentStore.updateIssue(workspaceSlug, projectId, issueId, data),
-      this.rootIssueDetailStore.activity.fetchActivities(workspaceSlug, projectId, issueId),
+      // [FORK] work-item-types — best-effort: the activity store is bound to the
+      // view's service and may 404 for an epic in the issues view; the field
+      // update itself already succeeded, so never let this reject it.
+      this.rootIssueDetailStore.activity.fetchActivities(workspaceSlug, projectId, issueId).catch(() => {}),
     ]);
   };
 
   removeIssue = async (workspaceSlug: string, projectId: string, issueId: string) => {
-    const currentStore =
-      this.serviceType === EIssueServiceType.EPICS
-        ? this.rootIssueDetailStore.rootIssueStore.projectEpics
-        : this.rootIssueDetailStore.rootIssueStore.projectIssues;
+    const currentStore = this.getWorkItemStore(issueId); // [FORK] work-item-types
     currentStore.removeIssue(workspaceSlug, projectId, issueId);
   };
 
   archiveIssue = async (workspaceSlug: string, projectId: string, issueId: string) => {
-    const currentStore =
-      this.serviceType === EIssueServiceType.EPICS
-        ? this.rootIssueDetailStore.rootIssueStore.projectEpics
-        : this.rootIssueDetailStore.rootIssueStore.projectIssues;
+    const currentStore = this.getWorkItemStore(issueId); // [FORK] work-item-types
     currentStore.archiveIssue(workspaceSlug, projectId, issueId);
   };
 
