@@ -916,6 +916,29 @@ n'avaient pas été mis à jour quand le fork a introduit les epics (exclus de `
   `.get(pk=...)` sur un id qui **peut être un epic** (parent/self/target), il faut `Issue.objects`. Audit rapide :
   `grep -rn "issue_objects\.\(filter\|get\)(pk=" apps/api` puis vérifier si la cible peut être un epic.
 
+### API externe v1 (PAT) — epics / types / propriétés (2026-07-08, livré & vérifié)
+
+Pour que des **agents IA** pilotent les tickets via un **token API (PAT)**, les features du fork sont désormais
+exposées dans l'**API externe v1** (`/api/v1/…`, `plane.api.*`, auth `APIKeyAuthentication`) — elles n'existaient que
+dans l'API applicative (`/api/`, auth session). Endpoints ajoutés (tous sous `workspaces/<slug>/projects/<project_id>/`) :
+- **Epics** : `epics/` (GET liste, POST — **force le type epic** côté serveur) + `epics/<pk>/` (GET/PATCH/DELETE), scopé
+  `Issue.epic_objects`. `api/views/epic.py` (sous-classe les endpoints work item v1).
+- **Work item types** : `issue-types/` + `issue-types/<pk>/` (liste exclut les epics) ; `epic-type/` (GET, découvre l'id
+  du type epic). `api/views/issue_type.py`.
+- **Custom properties** : définitions `issue-types/<type_id>/properties/` + `…/<pk>/` ; options
+  `issue-properties/<property_id>/options/` + `…/<pk>/` ; **valeurs** `work-items/<issue_id>/property-values/`
+  (GET + POST upsert, réutilise les helpers app `build_property_values`/`persist_property_values`/`read_typed_value`,
+  résout le ticket via `Issue.objects` → marche aussi sur les epics). `api/views/issue_property.py`.
+
+**Permissions** : lecture = membre projet ; **écritures de définitions** (types & propriétés) = **admin uniquement**
+(check inline `ProjectMember role=20`) ; création d'epic / écriture de valeurs = membre. Serializers v1 dédiés
+(`api/serializers/issue_type.py`, `issue_property.py`). Enregistrés dans `api/{views,serializers,urls}/__init__.py`.
+
+**Vérif** : testé live au PAT (CRUD epics, types, epic-type, def + value round-trip sur ticket **et** epic) + **11 tests
+contract** (`tests/contract/api/test_work_item_types_api.py`) + schéma OpenAPI (`ENABLE_DRF_SPECTACULAR=1`) sans erreur
+sur ces endpoints. **Suivi (léger)** : exemples/descriptions OpenAPI riches par endpoint (aujourd'hui auto-générés +
+tags par path) ; endpoints d'options non re-testés en contract (couverts par les endpoints app).
+
 ### Backlog / nice-to-have (non bloquant, aucun engagement)
 
 - **Colonnes custom en vue workspace** (multi-projet) : aujourd'hui les colonnes/valeurs custom du spreadsheet sont
