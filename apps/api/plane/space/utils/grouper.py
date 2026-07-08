@@ -95,6 +95,8 @@ def issue_on_results(
         "cycle_id",
         "created_by",
         "state__group",
+        # [FORK] work-item-types
+        "type_id",
     ]
 
     if group_by in FIELD_MAPPER:

@@ -769,6 +769,8 @@ class IssueIntakeSerializer(DynamicBaseSerializer):
             "created_at",
             "label_ids",
             "created_by",
+            # [FORK] work-item-types
+            "type_id",
         ]
         read_only_fields = fields
 
@@ -861,6 +863,8 @@ class IssueListDetailSerializer(serializers.Serializer):
             "sequence_id": instance.sequence_id,
             "project_id": instance.project_id,
             "parent_id": instance.parent_id,
+            # [FORK] work-item-types
+            "type_id": instance.type_id,
             "created_at": instance.created_at,
             "updated_at": instance.updated_at,
             "created_by": instance.created_by_id,
