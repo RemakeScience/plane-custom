@@ -903,6 +903,8 @@ class IssuePaginatedViewSet(BaseViewSet):
             "link_count",
             "attachment_count",
             "sub_issues_count",
+            # [FORK] work-item-types
+            "type_id",
         ]
 
         if str(is_description_required).lower() == "true":
