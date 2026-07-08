@@ -21,6 +21,13 @@ from .issue_type import (
     IssueTypeDetailAPIEndpoint,
     EpicTypeAPIEndpoint,
 )
+from .issue_property import (
+    IssuePropertyListCreateAPIEndpoint,
+    IssuePropertyDetailAPIEndpoint,
+    IssuePropertyOptionListCreateAPIEndpoint,
+    IssuePropertyOptionDetailAPIEndpoint,
+    IssuePropertyValueAPIEndpoint,
+)
 from .issue import (
     WorkspaceIssueAPIEndpoint,
     IssueListCreateAPIEndpoint,

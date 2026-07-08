@@ -6,6 +6,7 @@ from .asset import urlpatterns as asset_patterns
 from .cycle import urlpatterns as cycle_patterns
 from .epic import urlpatterns as epic_patterns  # [FORK] work-item-types
 from .issue_type import urlpatterns as issue_type_patterns  # [FORK] work-item-types
+from .issue_property import urlpatterns as issue_property_patterns  # [FORK] work-item-types
 from .intake import urlpatterns as intake_patterns
 from .label import urlpatterns as label_patterns
 from .member import urlpatterns as member_patterns
@@ -22,6 +23,7 @@ urlpatterns = [
     *cycle_patterns,
     *epic_patterns,  # [FORK] work-item-types
     *issue_type_patterns,  # [FORK] work-item-types
+    *issue_property_patterns,  # [FORK] work-item-types
     *intake_patterns,
     *label_patterns,
     *member_patterns,
