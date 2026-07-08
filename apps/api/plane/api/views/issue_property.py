@@ -12,6 +12,10 @@
 from rest_framework import status
 from rest_framework.response import Response
 
+# drf-spectacular imports
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
+
 # Module imports
 from plane.api.serializers import IssuePropertyAPISerializer, IssuePropertyOptionAPISerializer
 from plane.app.permissions import ProjectEntityPermission
@@ -239,9 +243,11 @@ class IssuePropertyValueAPIEndpoint(BaseAPIView):
             result.setdefault(str(value.property_id), []).append(read_typed_value(value))
         return result
 
+    @extend_schema(tags=["Custom Properties"], responses={200: OpenApiTypes.OBJECT})
     def get(self, request, slug, project_id, issue_id):
         return Response(self._serialize_values(slug, project_id, issue_id), status=status.HTTP_200_OK)
 
+    @extend_schema(tags=["Custom Properties"], request=OpenApiTypes.OBJECT, responses={200: OpenApiTypes.OBJECT})
     def post(self, request, slug, project_id, issue_id):
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
         issue = Issue.objects.filter(pk=issue_id, project_id=project_id).first()

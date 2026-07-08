@@ -176,6 +176,7 @@ class EpicTypeAPIEndpoint(BaseAPIView):
     """Read the project's epic type (external v1 API) so agents can discover its
     id (to filter epics, etc.). Creating the epic type stays in the app UI."""
 
+    serializer_class = IssueTypeAPISerializer
     permission_classes = [ProjectEntityPermission]
     use_read_replica = True
 
