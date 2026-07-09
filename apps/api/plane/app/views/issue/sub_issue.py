@@ -165,6 +165,8 @@ class SubIssuesEndpoint(BaseAPIView):
                 "is_draft",
                 "archived_at",
                 "state_group",
+                # [FORK] work-item-types
+                "type_id",
             )
         )
 
