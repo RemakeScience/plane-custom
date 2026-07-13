@@ -40,6 +40,11 @@ WORK_ITEM_REF = re.compile(r"(?<![A-Za-z0-9])#?([A-Za-z][A-Za-z0-9]{0,11})-(\d+)
 # word "preview". Kept deliberately permissive; can be moved to instance config.
 EPHEMERAL_URL = re.compile(r"https?://[^\s)>\]]*preview[^\s)>\]]*", re.IGNORECASE)
 
+# [FORK] Feature flag: on PR merge, cascade the linked work item and all its
+# descendants to their project's "completed" state. Disabled for now — only the
+# PR<->work item linkage is kept. Set to True to restore the cascade behaviour.
+CASCADE_COMPLETE_ON_PR_MERGE = False
+
 
 def _resolve_issues(slug, *texts):
     """Return a list of unique Issue objects referenced as ``#IDENT-seq`` in any
@@ -181,8 +186,10 @@ def _handle_pull_request(slug, payload):
             },
         )
 
-        # When the PR is merged, move the linked work item to completed.
-        if action == "closed" and pr.get("merged"):
+        # [FORK] When the PR is merged, optionally cascade the linked work item
+        # (and its descendants) to "completed". Disabled for now — we keep only
+        # the PR<->work item linkage above. Flip the flag to re-enable.
+        if CASCADE_COMPLETE_ON_PR_MERGE and action == "closed" and pr.get("merged"):
             _move_issue_to_completed(issue)
 
 
