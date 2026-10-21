@@ -921,6 +921,7 @@ n'avaient pas été mis à jour quand le fork a introduit les epics (exclus de `
 Pour que des **agents IA** pilotent les tickets via un **token API (PAT)**, les features du fork sont désormais
 exposées dans l'**API externe v1** (`/api/v1/…`, `plane.api.*`, auth `APIKeyAuthentication`) — elles n'existaient que
 dans l'API applicative (`/api/`, auth session). Endpoints ajoutés (tous sous `workspaces/<slug>/projects/<project_id>/`) :
+
 - **Epics** : `epics/` (GET liste, POST — **force le type epic** côté serveur) + `epics/<pk>/` (GET/PATCH/DELETE), scopé
   `Issue.epic_objects`. `api/views/epic.py` (sous-classe les endpoints work item v1).
 - **Work item types** : `issue-types/` + `issue-types/<pk>/` (liste exclut les epics) ; `epic-type/` (GET, découvre l'id
@@ -1350,3 +1351,25 @@ disparu = un bloc fork écrasé par l'upstream).
   toute dérive de modèle non migrée.
 - **Feature upstreamable** : la liaison GitHub est générique (non-EE) → envisager une PR vers `makeplane/plane`. Si
   acceptée, on cesse totalement de la maintenir dans le fork.
+
+## 27. Serveur MCP hébergé (`apps/mcp`, 2026-10-21)
+
+But : que l'équipe pilote Plane depuis des agents IA via un **MCP hébergé sur Dokploy**
+(`https://mcp.plane.tako-design.io/mcp`), chacun avec **son propre token API**.
+
+- **Pourquoi un MCP maison** : le MCP officiel (`makeplane/plane-mcp-server` 0.3.4) cible Plane commercial
+  (endpoints `-lite`, PQL, API v2, `work-item-types`/`work-item-properties`, customers, releases…). La plupart de
+  ses outils renvoient 404 sur le fork, et il ignore `epics/`, `issue-types/`, `property-values/`.
+- **Conception** : Python/FastMCP, 14 outils à paramètre `action`. Toutes les suppressions sont regroupées dans
+  l'outil `delete` (seul `destructiveHint`). Recherche par nom (projet `WEB`, `WEB-42`, état, label, assigné, type,
+  propriété, option). Appelle uniquement `/api/v1/` en `X-Api-Key` ; le serveur ne stocke aucun secret.
+- **Garde-fou de contrat** : `plane_fork_mcp/routes.py` (liste fermée des routes appelées) +
+  `tests/test_routes.py` (vérifie chacune contre les URLconf et les vues v1). Le job CI `mcp-tests` conditionne le
+  build de **toutes** les images.
+- **Bug v1 corrigé au passage** : `IssueSerializer.parent` (API v1) utilisait le manager par défaut, qui exclut les
+  epics, donc impossible de rattacher un work item à un epic via l'API externe. Le champ est maintenant déclaré
+  explicitement avec `Issue.objects` (`[FORK] work-item-types`), et un test contrat a été ajouté.
+- **Limite de requêtes** : `API_KEY_RATE_LIMIT` (60/minute par token par défaut) est trop bas pour un agent
+  (≈ 3 requêtes API par appel d'outil, mesuré) → `300/minute` en prod. Le MCP met en cache 30 s les listes de
+  référence et réessaie une fois les 429 courts.
+- Déploiement, configuration des clients, maintenance : `apps/mcp/README.md`.

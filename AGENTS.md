@@ -34,3 +34,12 @@ Prereq (once): `./setup.sh` — generates `apps/api/.env` from `.env.example`.
 - Teardown: `docker compose -f docker-compose-test.yml down -v`
 
 See `apps/api/tests/RUNNING_TESTS.md` for the full walkthrough and troubleshooting; see `apps/api/tests/TESTING_GUIDE.md` for test conventions and fixtures.
+
+## MCP server (`apps/mcp`, fork-only)
+
+Python (FastMCP) server exposing the external v1 API (`/api/v1/`) to AI agents; deployed as `plane-mcp`.
+
+- Tests: `cd apps/mcp && pip install -e '.[dev]' && pytest -q`
+- Changing a v1 endpoint the MCP uses? Update `apps/mcp/plane_fork_mcp/routes.py` and the tool: `tests/test_routes.py`
+  checks every route against `apps/api/plane/api/urls` and gates every image build in CI.
+- Details, deployment and client setup: `apps/mcp/README.md`.

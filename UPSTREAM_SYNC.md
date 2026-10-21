@@ -99,7 +99,14 @@ docker exec plane-fork-api-1 python manage.py makemigrations --check   # 0 = pas
 pnpm --filter @plane/types build          # IMPORTANT : rebuild types AVANT le typecheck web
 pnpm --filter web check:types             # doit finir a 0 erreur
 pnpm --filter @plane/i18n run sync:check  # doit etre 100%
+
+# Serveur MCP (apps/mcp) : ses routes doivent toujours exister dans l'API v1
+cd apps/mcp && pip install -e '.[dev]' && pytest -q   # meme job que mcp-tests en CI
 ```
+
+- Si `apps/mcp` échoue sur `test_routes.py` : upstream a renommé ou supprimé un endpoint v1 qu'un outil MCP
+  appelle → adapter `apps/mcp/plane_fork_mcp/routes.py` et l'outil (voir `apps/mcp/README.md`). `apps/mcp/` est
+  propre au fork : il ne crée jamais de conflit de merge.
 
 - Si une **nouvelle migration upstream** entre en collision de numéro : régénérer/renuméroter la migration du fork,
   puis relancer `manage.py migrate`. `makemigrations --check` détecte toute dérive.
