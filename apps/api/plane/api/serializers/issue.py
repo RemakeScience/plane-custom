@@ -66,6 +66,9 @@ class IssueSerializer(BaseSerializer):
     type_id = serializers.PrimaryKeyRelatedField(
         source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
+    # [FORK] work-item-types: the auto-generated field uses the default manager,
+    # which excludes epics, so an epic could not be set as a work item's parent.
+    parent = serializers.PrimaryKeyRelatedField(queryset=Issue.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Issue

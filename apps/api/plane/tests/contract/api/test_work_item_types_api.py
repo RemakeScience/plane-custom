@@ -81,6 +81,22 @@ class TestEpicsAPI:
             status.HTTP_204_NO_CONTENT
         )
 
+    @pytest.mark.django_db
+    def test_epic_can_be_a_work_item_parent(self, api_key_client, workspace, project, epic_type, task_type):
+        epic = Issue.objects.create(name="E", project=project, type=epic_type)
+        resp = api_key_client.post(
+            _v1(workspace, project, "work-items/"), {"name": "Child", "parent": str(epic.id)}, format="json"
+        )
+        assert resp.status_code == status.HTTP_201_CREATED, resp.data
+        assert str(resp.data["parent"]) == str(epic.id)
+
+        child = Issue.objects.create(name="Later", project=project, type=task_type)
+        resp = api_key_client.patch(
+            _v1(workspace, project, f"work-items/{child.id}/"), {"parent": str(epic.id)}, format="json"
+        )
+        assert resp.status_code == status.HTTP_200_OK, resp.data
+        assert str(Issue.objects.get(id=child.id).parent_id) == str(epic.id)
+
 
 @pytest.mark.contract
 class TestWorkItemTypesAPI:
