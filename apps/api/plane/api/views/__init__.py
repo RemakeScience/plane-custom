@@ -73,6 +73,7 @@ from .intake import (
 from .asset import UserAssetEndpoint, UserServerAssetEndpoint, GenericAssetEndpoint
 
 from .user import UserEndpoint
+from .user_workspace import UserWorkspacesEndpoint  # [FORK] mcp-server
 
 from .invite import WorkspaceInvitationsViewset
 

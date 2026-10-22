@@ -14,6 +14,7 @@ from .module import urlpatterns as module_patterns
 from .project import urlpatterns as project_patterns
 from .state import urlpatterns as state_patterns
 from .user import urlpatterns as user_patterns
+from .user_workspace import urlpatterns as user_workspace_patterns  # [FORK] mcp-server
 from .work_item import urlpatterns as work_item_patterns
 from .invite import urlpatterns as invite_patterns
 from .sticky import urlpatterns as sticky_patterns
@@ -31,6 +32,7 @@ urlpatterns = [
     *project_patterns,
     *state_patterns,
     *user_patterns,
+    *user_workspace_patterns,  # [FORK] mcp-server
     *work_item_patterns,
     *invite_patterns,
     *sticky_patterns,
