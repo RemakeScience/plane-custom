@@ -6,10 +6,11 @@ import functools
 import json
 import re
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Annotated, Any
 
 import markdown as md
 from fastmcp.exceptions import ToolError
+from pydantic import Field
 
 from plane_fork_mcp.client import PlaneAPI, PlaneAPIError
 
@@ -27,6 +28,11 @@ WORK_ITEM_LIST_FIELDS = (
 )
 
 PRIORITIES = ("urgent", "high", "medium", "low", "none")
+
+WorkspaceRef = Annotated[
+    str | None,
+    Field(description="Workspace slug or name; omit to use your default workspace (see `me`)."),
+]
 
 
 def plane_errors(fn: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:

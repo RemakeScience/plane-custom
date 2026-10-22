@@ -9,7 +9,16 @@ from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from plane_fork_mcp.context import get_api
-from plane_fork_mcp.tools._common import all_pages, body, compact, need, plane_errors, resolve_project, unknown
+from plane_fork_mcp.tools._common import (
+    WorkspaceRef,
+    all_pages,
+    body,
+    compact,
+    need,
+    plane_errors,
+    resolve_project,
+    unknown,
+)
 
 ProjectRef = Annotated[str, Field(description="Project UUID, identifier (e.g. 'WEB') or name.")]
 StateGroup = Literal["backlog", "unstarted", "started", "completed", "cancelled"]
@@ -37,8 +46,9 @@ def register(mcp: FastMCP) -> None:
         group: StateGroup | None = None,
         description: str | None = None,
         default: bool | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         project_id = await resolve_project(api, project)
         if action == "list":
             states = await all_pages(api, api.project(project_id, "states/"))
@@ -73,8 +83,9 @@ def register(mcp: FastMCP) -> None:
         color: str | None = None,
         description: str | None = None,
         parent: Annotated[str | None, Field(description="Parent label UUID (label groups)")] = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         project_id = await resolve_project(api, project)
         if action == "list":
             labels = await all_pages(api, api.project(project_id, "labels/"))

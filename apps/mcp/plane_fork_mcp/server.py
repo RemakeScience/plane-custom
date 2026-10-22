@@ -16,7 +16,8 @@ INSTRUCTIONS = """\
 Plane project management (RemakeScience fork): projects, work items, epics, work item types,
 custom properties, cycles, modules, comments, links.
 
-- Start with `me` to learn your workspace and project identifiers.
+- Start with `me`: it lists your workspaces (with their projects) and the default one. Every
+  tool takes an optional `workspace` (slug or name); omit it to use the default workspace.
 - Projects accept an identifier ('WEB'), a name or a UUID. Work items and epics accept an
   identifier such as 'WEB-42' or a UUID (then also pass project).
 - States, labels, assignees, types, custom properties and their options accept names.

@@ -14,6 +14,7 @@ from plane_fork_mcp.client import PlaneAPI, PlaneAPIError
 from plane_fork_mcp.context import get_api
 from plane_fork_mcp.tools._common import (
     UUID_RE,
+    WorkspaceRef,
     all_pages,
     body,
     compact,
@@ -139,8 +140,9 @@ def register(mcp: FastMCP) -> None:
         description: str | None = None,
         is_active: bool | None = None,
         is_default: bool | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         project_id = await resolve_project(api, project)
         if action == "list":
             return compact(await all_pages(api, api.project(project_id, "issue-types/")))
@@ -205,8 +207,9 @@ def register(mcp: FastMCP) -> None:
         is_default: bool | None = None,
         default_value: list[Any] | None = None,
         settings: dict[str, Any] | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
 
         if action in ("get_values", "set_values"):
             project_id, issue_id = await resolve_work_item(api, work_item, project)

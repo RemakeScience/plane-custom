@@ -1372,4 +1372,9 @@ But : que l'équipe pilote Plane depuis des agents IA via un **MCP hébergé sur
 - **Limite de requêtes** : `API_KEY_RATE_LIMIT` (60/minute par token par défaut) est trop bas pour un agent
   (≈ 3 requêtes API par appel d'outil, mesuré) → `300/minute` en prod. Le MCP met en cache 30 s les listes de
   référence et réessaie une fois les 429 courts.
+- **Multi-workspace (2026-10-22)** : un token Plane n'est pas limité à son workspace de création (l'auth ne le
+  vérifie pas). Un seul connecteur sert donc tous les workspaces de l'utilisateur : nouvel endpoint v1
+  `users/me/workspaces/` (`[FORK] mcp-server`, fichiers `api/{views,urls}/user_workspace.py`, test contrat
+  `test_user_workspaces_api.py`) ; `me` liste workspaces + projets ; chaque outil prend `workspace` (slug ou nom),
+  sinon `X-Workspace-Slug`, puis `PLANE_WORKSPACE_SLUG`, puis l'unique workspace de l'utilisateur.
 - Déploiement, configuration des clients, maintenance : `apps/mcp/README.md`.

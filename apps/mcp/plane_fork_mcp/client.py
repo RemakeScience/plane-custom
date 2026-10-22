@@ -26,7 +26,7 @@ DEFAULT_TIMEOUT = float(os.getenv("PLANE_TIMEOUT", "30"))
 # token; any write by the same token drops that token's entries.
 CACHE_TTL = float(os.getenv("PLANE_CACHE_TTL", "30"))
 _CACHEABLE = re.compile(
-    r"(^users/me/$|/projects/$|/(states|labels|members|issue-types|epic-type|properties|options)/$)"
+    r"(^users/me/(workspaces/)?$|/projects/$|/(states|labels|members|issue-types|epic-type|properties|options)/$)"
 )
 _cache: dict[tuple[str, str, tuple[tuple[str, Any], ...]], tuple[float, Any]] = {}
 

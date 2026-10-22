@@ -50,10 +50,32 @@ async def test_only_delete_is_destructive(mcp_client):
     assert destructive == {"delete"}
 
 
-async def test_me_returns_workspace_and_projects(mcp_client):
+async def test_me_lists_every_workspace_with_projects(mcp_client):
     data = await call(mcp_client, "me")
-    assert data["workspace_slug"] == WS
-    assert data["projects"][0]["identifier"] == "WEB"
+    assert data["default_workspace"] == WS
+    assert {w["slug"]: [p["identifier"] for p in w["projects"]] for w in data["workspaces"]} == {
+        WS: ["WEB"],
+        "beta": ["OPS"],
+    }
+
+
+async def test_workspace_argument_targets_another_workspace(mcp_client, plane):
+    data = await call(mcp_client, "state", action="list", project="OPS", workspace="Beta Corp")
+    assert [s["name"] for s in data["results"]] == ["Backlog"]
+    assert all(c[1].startswith(("users/", "workspaces/beta/")) for c in plane.calls)
+
+
+async def test_unknown_workspace_lists_yours(mcp_client):
+    with pytest.raises(ToolError, match=r"Your workspaces: acme \(Acme\), beta \(Beta Corp\)"):
+        await mcp_client.call_tool("project", {"action": "list", "workspace": "nope"})
+
+
+async def test_without_default_several_workspaces_must_be_chosen(mcp_client, monkeypatch):
+    monkeypatch.delenv("PLANE_WORKSPACE_SLUG")
+    with pytest.raises(ToolError, match="Several workspaces: pass `workspace`"):
+        await mcp_client.call_tool("project", {"action": "list"})
+    data = await call(mcp_client, "me")
+    assert data["default_workspace"] is None
 
 
 async def test_create_resolves_names_and_sets_properties(mcp_client, plane):

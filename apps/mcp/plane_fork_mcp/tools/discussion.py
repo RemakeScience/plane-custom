@@ -9,7 +9,17 @@ from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from plane_fork_mcp.context import get_api
-from plane_fork_mcp.tools._common import body, compact, need, page, plane_errors, resolve_work_item, to_html, unknown
+from plane_fork_mcp.tools._common import (
+    WorkspaceRef,
+    body,
+    compact,
+    need,
+    page,
+    plane_errors,
+    resolve_work_item,
+    to_html,
+    unknown,
+)
 
 WorkItemRef = Annotated[str, Field(description="Work item / epic UUID (then project is required) or 'WEB-42'.")]
 ProjectRef = Annotated[str | None, Field(description="Project UUID, identifier or name (needed with a UUID).")]
@@ -35,8 +45,9 @@ def register(mcp: FastMCP) -> None:
         text: Annotated[str | None, Field(description="Comment in Markdown")] = None,
         text_html: Annotated[str | None, Field(description="Comment as raw HTML (overrides text)")] = None,
         cursor: str | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         project_id, issue_id = await resolve_work_item(api, work_item, project)
         base = api.project(project_id, f"work-items/{issue_id}/comments/")
         html = text_html if text_html is not None else to_html(text)
@@ -72,8 +83,9 @@ def register(mcp: FastMCP) -> None:
         link_id: str | None = None,
         url: str | None = None,
         title: str | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         project_id, issue_id = await resolve_work_item(api, work_item, project)
         base = api.project(project_id, f"work-items/{issue_id}/links/")
         if action == "list":

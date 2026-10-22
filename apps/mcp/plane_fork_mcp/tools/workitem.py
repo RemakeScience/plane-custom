@@ -19,6 +19,7 @@ from plane_fork_mcp.client import PlaneAPI, PlaneAPIError
 from plane_fork_mcp.context import get_api
 from plane_fork_mcp.tools._common import (
     WORK_ITEM_LIST_FIELDS,
+    WorkspaceRef,
     all_pages,
     body,
     compact,
@@ -273,8 +274,9 @@ def register(mcp: FastMCP) -> None:
         query: Annotated[str | None, Field(description="search text")] = None,
         relation_type: RelationType | None = None,
         related: Annotated[list[str] | None, Field(description="add_relation targets")] = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         write = dict(
             name=name,
             description=description,
@@ -421,8 +423,9 @@ def register(mcp: FastMCP) -> None:
         order_by: str | None = None,
         limit: Annotated[int, Field(ge=1, le=1000)] = 50,
         cursor: str | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         write = dict(
             name=name,
             description=description,

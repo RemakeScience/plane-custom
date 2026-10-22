@@ -15,7 +15,9 @@ from plane_fork_mcp.client import clear_cache
 from plane_fork_mcp.server import build_server
 
 WS = "acme"
+WS2 = "beta"
 PROJECT = "11111111-1111-1111-1111-111111111111"
+PROJECT2 = "11111111-1111-1111-1111-222222222222"
 ME = "22222222-2222-2222-2222-222222222222"
 ALICE = "22222222-2222-2222-2222-333333333333"
 STATE_TODO = "33333333-3333-3333-3333-333333333333"
@@ -86,6 +88,15 @@ class FakePlane:
         p = f"workspaces/{WS}/projects/{PROJECT}/"
         if path == "users/me/":
             return 200, {"id": ME, "display_name": "me", "email": "me@acme.io"}
+        if path == "users/me/workspaces/":
+            return 200, [
+                {"id": "w1", "slug": WS, "name": "Acme", "role": 20},
+                {"id": "w2", "slug": WS2, "name": "Beta Corp", "role": 15},
+            ]
+        if path == f"workspaces/{WS2}/projects/":
+            return 200, paginated([{"id": PROJECT2, "identifier": "OPS", "name": "Operations"}])
+        if path == f"workspaces/{WS2}/projects/{PROJECT2}/states/":
+            return 200, paginated([{"id": STATE_TODO, "name": "Backlog", "group": "backlog"}])
         if path == f"workspaces/{WS}/projects/":
             return 200, paginated([{"id": PROJECT, "identifier": "WEB", "name": "Website"}])
         if path == f"workspaces/{WS}/work-items/WEB-1/":

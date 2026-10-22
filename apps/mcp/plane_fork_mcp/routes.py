@@ -18,6 +18,7 @@ WI = P + "work-items/<uuid:issue_id>/"
 ROUTES: tuple[tuple[str, str], ...] = (
     # user
     ("GET", "users/me/"),
+    ("GET", "users/me/workspaces/"),  # [FORK] mcp-server
     # workspace
     ("GET", W + "members/"),
     ("GET", W + "work-items/search/"),

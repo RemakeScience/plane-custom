@@ -17,18 +17,22 @@ toujours aligné sur l'API déployée.
 Adresse : **`https://mcp.plane.glyphe.io/mcp`** (transport « streamable HTTP »).
 
 Chacun utilise **son propre token API** : les actions sont faites en son nom, avec ses droits Plane.
+**Un seul connecteur suffit pour tous ses workspaces** : le token donne accès à chaque workspace dont on est
+membre, l'outil `me` les liste, et chaque outil prend un paramètre `workspace` (slug ou nom) que l'agent
+renseigne selon la demande (« dans le workspace Glyphe, … »).
 
 1. Dans Plane : **Paramètres du profil → Tokens API** (`<plane>/settings/profile/api-tokens`) → ajouter un token,
    puis le copier (`plane_api_…`).
-2. Repérer le **slug du workspace** : c'est la partie de l'URL après le domaine (`https://plane…/<slug>/projects`).
-3. Déclarer le serveur dans son client :
+2. Déclarer le serveur dans son client. L'en-tête `X-Workspace-Slug` est **facultatif** : il fixe le workspace
+   utilisé quand l'agent n'en précise pas. Sans lui, et si l'on a plusieurs workspaces, l'agent doit en choisir
+   un à chaque appel. Le slug est la partie de l'URL après le domaine (`https://plane…/<slug>/projects`).
 
 **Claude Code**
 
 ```bash
 claude mcp add --transport http plane https://mcp.plane.glyphe.io/mcp \
   --header "Authorization: Bearer plane_api_xxx" \
-  --header "X-Workspace-Slug: mon-workspace"
+  --header "X-Workspace-Slug: mon-workspace"   # facultatif
 ```
 
 **Cursor** (`~/.cursor/mcp.json`) / **VS Code** (`.vscode/mcp.json`, clé `servers` au lieu de `mcpServers`)
@@ -47,34 +51,31 @@ claude mcp add --transport http plane https://mcp.plane.glyphe.io/mcp \
 }
 ```
 
-**Claude Desktop** (pas d'en-têtes personnalisés en natif) : passer par `mcp-remote`.
+**Claude (web, Desktop, iOS, Android)** : connecteur personnalisé, sans `mcp-remote`.
 
-```json
-{
-  "mcpServers": {
-    "plane": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp.plane.glyphe.io/mcp",
-        "--header",
-        "Authorization: Bearer plane_api_xxx",
-        "--header",
-        "X-Workspace-Slug: mon-workspace"
-      ]
-    }
-  }
-}
-```
+1. Sur **claude.ai (web)** → Paramètres → Connecteurs → **Ajouter un connecteur personnalisé**.
+   On ne peut pas l'ajouter depuis le mobile, mais il y apparaît ensuite automatiquement, de même que dans
+   Claude Desktop.
+2. URL : `https://mcp.plane.glyphe.io/mcp`. C'est bien `/mcp` : les chemins `/http/mcp` et `/http/api-key/mcp`
+   sont ceux du MCP officiel de Plane, pas du nôtre.
+3. Pas d'OAuth : notre serveur n'en propose pas. Dans la section **en-têtes de requête**, ajouter :
+   - `Authorization` = `Bearer plane_api_xxx` (son propre token) ;
+   - facultatif : `X-Workspace-Slug` = `mon-workspace` (workspace par défaut ; sans lui, l'agent choisit).
+4. Tester dans une conversation avec le connecteur activé : « liste mes projets Plane ».
 
-Le token est un secret : ne pas le commiter (dans VS Code, préférer une variable `${input:…}`).
+Les appels partent de l'infrastructure d'Anthropic, pas de l'appareil : le serveur doit être joignable depuis
+Internet, ce qui est le cas derrière Dokploy.
+
+Le token est un secret : ne pas le commiter (dans VS Code, préférer une variable `${input:…}`). Il donne accès à
+Plane avec les droits de son propriétaire : en cas de fuite, le révoquer dans Plane. Sur une organisation Claude
+Team/Enterprise où c'est un admin qui ajoute le connecteur pour tout le monde, les en-têtes seraient communs à
+tous : chacun agirait alors avec le même token. Dans ce cas, que chacun ajoute plutôt son propre connecteur.
 
 ### Les outils
 
 | Outil               | Actions                                                                                                                                                                                                                                                        |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `me`                | utilisateur courant, slug du workspace, projets accessibles — **à appeler en premier**                                                                                                                                                                         |
+| `me`                | utilisateur courant, tous ses workspaces avec leurs projets, workspace par défaut — **à appeler en premier**                                                                                                                                                   |
 | `project`           | list, retrieve, create, update, archive, unarchive, list_members                                                                                                                                                                                               |
 | `workitem`          | list (filtres état/groupe/assigné/label/type/priorité/parent), retrieve, create, update, search, list_children, list_activity, list_attachments, list_relations, add_relation                                                                                  |
 | `epic`              | list, retrieve, create, update, list_children                                                                                                                                                                                                                  |
@@ -89,6 +90,7 @@ Le token est un secret : ne pas le commiter (dans VS Code, préférer une variab
 
 Côté agent :
 
+- chaque outil (sauf `me`) accepte `workspace` (slug ou nom), sinon le workspace par défaut ;
 - les projets acceptent un identifiant (`WEB`), un nom ou un UUID ; les work items et epics un identifiant
   (`WEB-42`) ou un UUID ;
 - états, labels, assignés (`me`, email, nom), types, propriétés et options acceptent **des noms** ;
@@ -115,6 +117,7 @@ L'image est construite par `.github/workflows/build.yml` à chaque push sur `mai
          condition: any
      environment:
        PLANE_BASE_URL: http://api:8000
+       # PLANE_WORKSPACE_SLUG: mon-workspace  # facultatif : défaut si ni `workspace` ni X-Workspace-Slug
      networks:
        - default
        - dokploy-network
@@ -137,6 +140,7 @@ Variables d'environnement :
 | Variable               | Défaut            | Rôle                                                                           |
 | ---------------------- | ----------------- | ------------------------------------------------------------------------------ |
 | `PLANE_BASE_URL`       | `http://api:8000` | API Plane (réseau interne du stack)                                            |
+| `PLANE_WORKSPACE_SLUG` | —                 | défaut quand ni l'outil (`workspace`) ni l'en-tête ne précisent de workspace   |
 | `PORT`                 | `8000`            | port HTTP                                                                      |
 | `PLANE_CACHE_TTL`      | `30`              | durée du cache des listes de référence (s), `0` pour désactiver                |
 | `PLANE_MAX_RETRY_WAIT` | `15`              | sur un 429, réessaie une fois si Plane demande d'attendre au plus ce délai (s) |

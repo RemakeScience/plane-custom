@@ -12,6 +12,7 @@ from plane_fork_mcp.client import PlaneAPI
 from plane_fork_mcp.context import get_api
 from plane_fork_mcp.tools._common import (
     WORK_ITEM_LIST_FIELDS,
+    WorkspaceRef,
     all_pages,
     body,
     compact,
@@ -100,8 +101,9 @@ def register(mcp: FastMCP) -> None:
         work_item: Annotated[str | None, Field(description="UUID or identifier")] = None,
         new_cycle_id: str | None = None,
         cursor: str | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         project_id = await resolve_project(api, project)
         if action == "list":
             return page(await api.get(api.project(project_id, "cycles/"), cycle_view=view, fields=CYCLE_FIELDS))
@@ -177,8 +179,9 @@ def register(mcp: FastMCP) -> None:
         work_items: WorkItems = None,
         work_item: Annotated[str | None, Field(description="UUID or identifier")] = None,
         cursor: str | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         project_id = await resolve_project(api, project)
 
         async def payload() -> dict[str, Any]:
@@ -247,8 +250,9 @@ def register(mcp: FastMCP) -> None:
         status: Literal["pending", "accepted", "rejected", "snoozed", "duplicate"] | None = None,
         duplicate_to: Annotated[str | None, Field(description="Work item UUID or identifier")] = None,
         cursor: str | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
         project_id = await resolve_project(api, project)
         base = api.project(project_id, "intake-issues/")
         issue = body(name=name, description_html=to_html(description), priority=priority)

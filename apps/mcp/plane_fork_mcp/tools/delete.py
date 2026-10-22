@@ -14,7 +14,7 @@ from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from plane_fork_mcp.context import get_api
-from plane_fork_mcp.tools._common import need, plane_errors, resolve_project, resolve_work_item
+from plane_fork_mcp.tools._common import WorkspaceRef, need, plane_errors, resolve_project, resolve_work_item
 from plane_fork_mcp.tools.types import resolve_type
 
 Resource = Literal[
@@ -61,8 +61,9 @@ def register(mcp: FastMCP) -> None:
         work_item: Annotated[str | None, Field(description="Work item / epic UUID or identifier")] = None,
         type_id: str | None = None,
         property_id: str | None = None,
+        workspace: WorkspaceRef = None,
     ) -> Any:
-        api = get_api()
+        api = await get_api(workspace)
 
         if resource in ("workitem", "epic"):
             project_id, issue_id = await resolve_work_item(api, work_item or id, project)
