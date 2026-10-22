@@ -14,7 +14,7 @@ toujours aligné sur l'API déployée.
 
 ## Utiliser le MCP (collaborateurs)
 
-Adresse : **`https://mcp.plane.tako-design.io/mcp`** (transport « streamable HTTP »).
+Adresse : **`https://mcp.plane.glyphe.io/mcp`** (transport « streamable HTTP »).
 
 Chacun utilise **son propre token API** : les actions sont faites en son nom, avec ses droits Plane.
 
@@ -26,7 +26,7 @@ Chacun utilise **son propre token API** : les actions sont faites en son nom, av
 **Claude Code**
 
 ```bash
-claude mcp add --transport http plane https://mcp.plane.tako-design.io/mcp \
+claude mcp add --transport http plane https://mcp.plane.glyphe.io/mcp \
   --header "Authorization: Bearer plane_api_xxx" \
   --header "X-Workspace-Slug: mon-workspace"
 ```
@@ -37,7 +37,7 @@ claude mcp add --transport http plane https://mcp.plane.tako-design.io/mcp \
 {
   "mcpServers": {
     "plane": {
-      "url": "https://mcp.plane.tako-design.io/mcp",
+      "url": "https://mcp.plane.glyphe.io/mcp",
       "headers": {
         "Authorization": "Bearer plane_api_xxx",
         "X-Workspace-Slug": "mon-workspace"
@@ -57,7 +57,7 @@ claude mcp add --transport http plane https://mcp.plane.tako-design.io/mcp \
       "args": [
         "-y",
         "mcp-remote",
-        "https://mcp.plane.tako-design.io/mcp",
+        "https://mcp.plane.glyphe.io/mcp",
         "--header",
         "Authorization: Bearer plane_api_xxx",
         "--header",
@@ -122,12 +122,12 @@ L'image est construite par `.github/workflows/build.yml` à chaque push sur `mai
        - api
    ```
 
-2. Dokploy → **Domains** → ajouter `mcp.plane.tako-design.io`, service **`mcp`**, port **`8000`**, HTTPS activé.
+2. Dokploy → **Domains** → ajouter `mcp.plane.glyphe.io`, service **`mcp`**, port **`8000`**, HTTPS activé.
    Un enregistrement DNS `mcp.plane` vers le serveur est nécessaire.
 3. **Monter la limite de requêtes de l'API** dans `plane.env` : `API_KEY_RATE_LIMIT=300/minute` (60 par défaut).
    La limite s'applique **par token**, et un appel d'outil coûte en moyenne près de 3 requêtes (recherche par nom
    comprise, malgré le cache) : avec 60/minute, un agent est bloqué au bout de quelques dizaines d'appels.
-4. Vérifier : `curl https://mcp.plane.tako-design.io/health` → `ok`, puis un appel sans token → `401`.
+4. Vérifier : `curl https://mcp.plane.glyphe.io/health` → `ok`, puis un appel sans token → `401`.
 
 Le serveur ne stocke aucun secret : il transmet le token de chaque appelant à l'API (en `X-Api-Key`) et ne garde
 qu'un cache mémoire de 30 s des listes de référence (projets, états, labels, membres, types, propriétés, options).

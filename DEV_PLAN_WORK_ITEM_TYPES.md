@@ -1355,7 +1355,7 @@ disparu = un bloc fork écrasé par l'upstream).
 ## 27. Serveur MCP hébergé (`apps/mcp`, 2026-10-21)
 
 But : que l'équipe pilote Plane depuis des agents IA via un **MCP hébergé sur Dokploy**
-(`https://mcp.plane.tako-design.io/mcp`), chacun avec **son propre token API**.
+(`https://mcp.plane.glyphe.io/mcp`), chacun avec **son propre token API**.
 
 - **Pourquoi un MCP maison** : le MCP officiel (`makeplane/plane-mcp-server` 0.3.4) cible Plane commercial
   (endpoints `-lite`, PQL, API v2, `work-item-types`/`work-item-properties`, customers, releases…). La plupart de
